@@ -17,6 +17,7 @@ Rule 9.
 
 import json
 import logging
+import re
 import time
 import uuid
 from typing import Any
@@ -158,7 +159,10 @@ def _call_model(facts: TransactionFacts, result_id: str) -> dict[str, str]:
                     if getattr(part, "text", None):
                         reply += part.text
     except Exception as exc:
-        raise ModelUnavailable(f"model {settings.GEMINI_MODEL!r} could not be reached") from exc
+        logger.exception("model call failed for %s", settings.GEMINI_MODEL)
+        raise ModelUnavailable(
+            f"model {settings.GEMINI_MODEL!r} could not be reached: {_scrub(exc)}"
+        ) from exc
 
     limits.record_model_call()
     latency_ms = int((time.monotonic() - started) * 1000)
@@ -168,6 +172,23 @@ def _call_model(facts: TransactionFacts, result_id: str) -> dict[str, str]:
         {"mode": "live", "model": settings.GEMINI_MODEL, "latency_ms": latency_ms, **usage},
     )
     return _parse_items(reply)
+
+
+_SECRET = re.compile(r"AIza[0-9A-Za-z_\-]{20,}|key=[^&\s\"]+", re.IGNORECASE)
+
+
+def _scrub(exc: BaseException) -> str:
+    """A short, credential-free description of a failure, safe for logs.
+
+    Provider errors sometimes echo the request URL, which carries the API key.
+    Nothing here reaches a client either way — standing Rule 5 — but an audit
+    log is not a place to leak a key.
+    """
+    text = f"{type(exc).__name__}: {exc}"
+    cause = exc.__cause__ or exc.__context__
+    if cause is not None:
+        text += f" <- {type(cause).__name__}: {cause}"
+    return _SECRET.sub("[redacted]", text)[:300]
 
 
 def _offline_reasons(facts: TransactionFacts, applied: list[str]) -> dict[str, str]:
@@ -269,6 +290,7 @@ def run_checklist(facts: TransactionFacts, caller: str = "local") -> ChecklistRe
                     "stage": "model_call",
                     "resolution": "degraded_to_summaries",
                     "error": type(exc).__name__,
+                    "detail": _scrub(exc),
                 },
             )
             audit.append(
