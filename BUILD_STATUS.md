@@ -1,0 +1,56 @@
+# BUILD_STATUS
+
+**Current phase: Prompt 3 — Pydantic schemas, the shared spine.**
+
+Target: **localhost**. Deployment deferred 2026-08-28.
+Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
+
+| # | Prompt | Status |
+|---|---|---|
+| 1 | Spec validation and standing rules | ✅ done — Checkpoint 1 passed |
+| 2 | Project scaffold, config, and secret hygiene | ✅ done — Checkpoint 2 passed 7/7 |
+| 3 | Pydantic schemas, the shared spine | ⬜ next |
+| 4 | Rule data files and loader | ⬜ |
+| 5 | Deterministic engine and the rule tests | ⬜ |
+| 6 | Append-only audit log | ⬜ |
+| 7 | ADK agent, model wiring, and cost control | ⬜ |
+| 8 | FastAPI routes | ⬜ |
+| 9 | Templates, the disclaimer, and the confirm button | ⬜ |
+| 10 | Demo fixtures, smoke script, and end-to-end verification | ⬜ |
+| 11 | Cloud Run deploy and README | ⏸ deferred — run **item 5 only** (README) during Prompt 10 |
+
+## Spot checks
+
+| After prompt | Check | Status |
+|---|---|---|
+| 2 | Environment and secrets, incl. scanner canary | ✅ canary-verified both directions |
+| 2 | Connection pooling | ⏭ skipped — no database |
+| 5 | Determinism | ⬜ |
+| 7 | Metered API controls | ⬜ |
+| 7 | Payment integration | ⏭ skipped — no payments |
+| 8 | Data access | ⬜ |
+
+## Prompt 1 record
+
+Five consistency checks run against `SPEC.md`:
+
+1. Routes, structure comment vs agent flow — **PASS** (agent flow is a lifecycle
+   narrative, not a route inventory; no contradiction)
+2. Six fields identical in input table and fixtures — **FAIL, accepted**. The
+   fixtures are positional prose; values and ordering match the table exactly.
+   Prompt 5 pins them as explicit JSON. Recorded in `SPEC.md` under "Known
+   imprecision in the spec above, accepted rather than edited"
+3. Rules in test expectations exist in seed rules — **PASS**
+4. Tier values consistent — **PASS** (`review` → `broker_review` bucket by design)
+5. Disclaimer appears exactly once — **PASS**, `SPEC.md:216`
+
+Produced: `CLAUDE.md` (17 rules, disclaimer verified byte-identical to `SPEC.md`),
+`SPEC.md` "Resolved during build planning" (5 decisions), this file.
+
+## Open before demo
+
+- Verify every citation against current statute. `dc_underground_tank` and
+  `md_lead_registration` are the least certain. Not a code task.
+- Get a Gemini key if the live agent is to be demoed. Offline mode covers the
+  build but shows a rules engine, not an ADK agent.
+- Ask whoever owns Entry 1's deploy script whether a GCP project already exists.

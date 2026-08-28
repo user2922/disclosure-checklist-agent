@@ -1,0 +1,13 @@
+# Normalise line endings.
+#
+# Shell scripts MUST stay LF. Git's autocrlf on Windows would otherwise hand a
+# checkout CRLF copies of scripts/*.sh, and bash then fails on every line with
+# "\r: command not found" — a breakage that looks like a script bug, not a
+# checkout bug. Same reasoning for .py, which is run by both Windows and the
+# linux/amd64 container.
+
+* text=auto
+*.sh  text eol=lf
+*.py  text eol=lf
+*.yaml text eol=lf
+*.yml  text eol=lf

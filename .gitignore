@@ -1,0 +1,26 @@
+# Secrets — never commit
+.env
+.env.local
+.env.*.local
+*-service-account.json
+service-account*.json
+gcp-credentials*.json
+application_default_credentials.json
+
+# Audit log — runtime data, may contain transaction facts
+*.jsonl
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

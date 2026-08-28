@@ -1,0 +1,32 @@
+# Disclosure Checklist Agent — pinned. Versions are what actually resolved on
+# Python 3.12.10 / win-arm64, not aspirational pins.
+#
+# NOTE for this machine (Windows on ARM64): do NOT use uvicorn[standard].
+# That extra pulls httptools, which has no win_arm64 wheel and fails to build
+# without a C toolchain. Plain uvicorn uses h11 and is fine at demo scale.
+#
+# cryptography is pinned explicitly, above its floor, because google-adk's
+# resolver otherwise selects an older release with no win_arm64 wheel and
+# falls back to compiling Rust from source, which fails.
+
+# Agent runtime
+google-adk==2.8.0
+
+# HTTP layer
+fastapi==0.141.1
+uvicorn==0.52.4
+jinja2==3.1.6
+
+# Schemas and config
+pydantic==2.13.5
+pydantic-settings==2.15.0
+PyYAML==6.0.3
+
+# Platform pin — see note above
+cryptography==46.0.3
+
+# Dev / test
+pytest==9.1.1
+httpx==0.28.1
+ruff==0.16.5
+watchfiles==1.2.0
