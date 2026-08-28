@@ -1,6 +1,6 @@
 # BUILD_STATUS
 
-**Current phase: Prompt 3 — Pydantic schemas, the shared spine.**
+**Current phase: Prompt 4 — Rule data files and loader.**
 
 Target: **localhost**. Deployment deferred 2026-08-28.
 Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
@@ -9,8 +9,8 @@ Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
 |---|---|---|
 | 1 | Spec validation and standing rules | ✅ done — Checkpoint 1 passed |
 | 2 | Project scaffold, config, and secret hygiene | ✅ done — Checkpoint 2 passed 7/7 |
-| 3 | Pydantic schemas, the shared spine | ⬜ next |
-| 4 | Rule data files and loader | ⬜ |
+| 3 | Pydantic schemas, the shared spine | ✅ done — Checkpoint 3 passed 9/9 |
+| 4 | Rule data files and loader | ⬜ next |
 | 5 | Deterministic engine and the rule tests | ⬜ |
 | 6 | Append-only audit log | ⬜ |
 | 7 | ADK agent, model wiring, and cost control | ⬜ |
