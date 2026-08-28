@@ -1,6 +1,6 @@
 # BUILD_STATUS
 
-**Current phase: Prompt 5 — Deterministic engine and the rule tests.**
+**Current phase: Prompt 6 — Append-only audit log.**
 
 Target: **localhost**. Deployment deferred 2026-08-28.
 Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
@@ -11,8 +11,8 @@ Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
 | 2 | Project scaffold, config, and secret hygiene | ✅ done — Checkpoint 2 passed 7/7 |
 | 3 | Pydantic schemas, the shared spine | ✅ done — Checkpoint 3 passed 9/9 |
 | 4 | Rule data files and loader | ✅ done — Checkpoint 4 passed 7/7 |
-| 5 | Deterministic engine and the rule tests | ⬜ next |
-| 6 | Append-only audit log | ⬜ |
+| 5 | Deterministic engine and the rule tests | ✅ done — Checkpoint 5 passed 7/7 |
+| 6 | Append-only audit log | ⬜ next |
 | 7 | ADK agent, model wiring, and cost control | ⬜ |
 | 8 | FastAPI routes | ⬜ |
 | 9 | Templates, the disclaimer, and the confirm button | ⬜ |
@@ -25,7 +25,7 @@ Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
 |---|---|---|
 | 2 | Environment and secrets, incl. scanner canary | ✅ canary-verified both directions |
 | 2 | Connection pooling | ⏭ skipped — no database |
-| 5 | Determinism | ⬜ |
+| 5 | Determinism | ✅ 3 canaries; suite proven able to fail |
 | 7 | Metered API controls | ⬜ |
 | 7 | Payment integration | ⏭ skipped — no payments |
 | 8 | Data access | ⬜ |

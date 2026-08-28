@@ -527,7 +527,7 @@ No network, no API key, no model. pytest -q must pass with both unset.
 - [ ] `dc_topa` appears in both the required set and the broker-review set
 - [ ] The determinism test runs `compose_buckets` at least 20 times and compares results
 - [ ] `evaluate_rule("no_such_rule", facts)` returns `applies` False and does not raise
-- [ ] `grep -n "model\|genai\|adk" app/tools.py app/engine.py` returns nothing
+- [ ] `app/tools.py` and `app/engine.py` import nothing from google/genai/adk and make no client calls — check imports and call sites, not raw text: pydantic's own `model_validate` and any docstring saying "never calls a model" both match a naive grep
 
 > **Spot check — determinism.** Before Prompt 6:
 > - [ ] `rules_evaluated` equals the full rule count for the jurisdiction plus federal
