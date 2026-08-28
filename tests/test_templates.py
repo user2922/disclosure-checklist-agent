@@ -142,3 +142,43 @@ def test_audit_page_renders_every_entry_kind(client: TestClient) -> None:
 def test_pages_declare_a_favicon(client: TestClient) -> None:
     """A missing favicon 404s on every page load and reads as unfinished."""
     assert 'rel="icon"' in client.get("/").text
+
+
+def test_audit_groups_entries_into_one_record_per_transaction(client: TestClient) -> None:
+    """A flat row per entry buries the story; a judge should see one run at a glance."""
+    for facts in (MD_1985, DC_TENANT):
+        client.post("/api/checklist", json=facts)
+    page = client.get("/audit").text
+
+    assert page.count('class="card run"') == 2, "one card per transaction"
+    assert "does not apply" in page, "the negatives are the point of this log"
+    assert "awaiting confirmation" in page
+
+
+def test_audit_record_shows_the_facts_it_was_run_on(client: TestClient) -> None:
+    """An audit log that records a decision but not its inputs cannot be audited."""
+    client.post("/api/checklist", json=DC_TENANT)
+    page = client.get("/audit").text
+    for token in ("condo", "built 2005", "tenant occupied", "cash"):
+        assert token in page, token
+
+
+def test_audit_record_shows_the_confirmation_and_its_caveat(client: TestClient) -> None:
+    rid = client.post("/api/checklist", json=DC_TENANT).json()["result_id"]
+    client.post(
+        "/api/confirm",
+        json={"result_id": rid, "confirmed_by": "Dana Reyes"},
+        headers={"Origin": "http://localhost:8080"},
+    )
+    page = client.get("/audit").text
+    assert "Dana Reyes" in page
+    assert "identity verified: False" in page
+    assert "confirmed" in page
+
+
+def test_every_rule_considered_appears_in_the_record(client: TestClient) -> None:
+    client.post("/api/checklist", json=DC_TENANT)
+    page = client.get("/audit").text
+    assert "4 of 9 apply" in page
+    for rule_id in ("dc_topa", "dc_hoa_disclosure", "fin_fha_appraisal"):
+        assert rule_id in page, f"{rule_id} missing — the log must show what was considered"

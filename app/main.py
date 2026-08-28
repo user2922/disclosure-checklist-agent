@@ -219,7 +219,12 @@ def audit_page(request: Request) -> Any:
     return templates.TemplateResponse(
         request=request,
         name="audit.html",
-        context={"entries": read.entries, "skipped": read.skipped, "page": "audit"},
+        context={
+            "runs": audit.group_by_result(read.entries),
+            "entries": read.entries,
+            "skipped": read.skipped,
+            "page": "audit",
+        },
     )
 
 

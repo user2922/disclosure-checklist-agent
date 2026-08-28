@@ -209,3 +209,21 @@ def result_exists(result_id: str, *, path: str | Path | None = None) -> bool:
 
     read = read_entries(limit=10**9, result_id=result_id, path=path)
     return any(entry.kind == "result" for entry in read.entries)
+
+
+def group_by_result(entries: list[AuditEntry]) -> list[tuple[str, list[AuditEntry]]]:
+    """Group entries into one run per result_id, newest run first.
+
+    Groups appear in the order their newest entry appeared, so the ordering of
+    the flat log is preserved. Within a group the entries are returned oldest
+    first, because a single run reads as a sequence: rules considered, then the
+    model call, then the result, then whoever confirmed it.
+    """
+    order: list[str] = []
+    grouped: dict[str, list[AuditEntry]] = {}
+    for entry in entries:
+        if entry.result_id not in grouped:
+            grouped[entry.result_id] = []
+            order.append(entry.result_id)
+        grouped[entry.result_id].append(entry)
+    return [(rid, list(reversed(grouped[rid]))) for rid in order]

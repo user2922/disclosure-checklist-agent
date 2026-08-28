@@ -341,6 +341,7 @@ def run_checklist(facts: TransactionFacts, caller: str = "local") -> ChecklistRe
         result_id,
         {
             "mode": mode,
+            "facts": facts.model_dump(mode="json"),
             "facts_hash": facts_hash,
             "required": buckets.required,
             "likely": buckets.likely,
