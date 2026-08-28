@@ -1,0 +1,73 @@
+# District of Columbia disclosure rules.
+#
+# SEED DATA. Every citation below is a starting point and must be verified
+# against current statute before the demo. It is not legal advice.
+# dc_underground_tank is among the least certain — see SPEC.md Open Questions.
+
+- id: dc_sellers_disclosure
+  name: DC Seller's Disclosure Statement
+  citation: "D.C. Code § 42-1301 et seq."
+  applies_when:
+    jurisdiction: DC
+  tier: required
+  summary: >-
+    The property is a DC residential resale, so the seller must deliver the
+    District's Seller's Disclosure Statement to the purchaser.
+
+- id: dc_topa
+  name: Tenant Opportunity to Purchase Act (TOPA) Notice
+  citation: "D.C. Code § 42-3404.02 et seq."
+  applies_when:
+    jurisdiction: DC
+    seller_occupancy: tenant_occupied
+  tier: required
+  summary: >-
+    The DC property is tenant-occupied, so the tenant must be given an
+    opportunity to purchase before the sale can proceed.
+  review_note: >-
+    Single-family TOPA exemptions and elderly/disabled tenant carve-outs depend
+    on facts not captured here. Broker must verify tenant status and notice
+    timing.
+
+- id: dc_condo_resale
+  name: Condominium Resale Certificate / Public Offering Statement
+  citation: "D.C. Code § 42-1904.11"
+  applies_when:
+    jurisdiction: DC
+    property_type: condo
+  tier: required
+  summary: >-
+    The property is a DC condominium, so the seller must furnish the resale
+    certificate and public offering statement from the condominium association.
+
+- id: dc_hoa_disclosure
+  name: Homeowners Association Disclosure
+  citation: "No DC statute equivalent to the condominium provisions identified — see review note"
+  applies_when:
+    jurisdiction: DC
+    has_association: true
+    property_type: { ne: condo }
+  tier: required
+  summary: >-
+    The DC property is governed by a homeowners association rather than a
+    condominium regime, so association governing documents, assessments and
+    resale information should be disclosed to the buyer.
+  review_note: >-
+    Scope varies and this citation is unverified. DC's statutory resale
+    machinery is written for condominiums; obligations for a non-condominium
+    association may arise from the governing documents or the contract rather
+    than statute. Broker must confirm what is actually required.
+
+- id: dc_underground_tank
+  name: Underground Storage Tank Disclosure
+  citation: "D.C. Code § 8-113.01 et seq. (Underground Storage Tank Management Act)"
+  applies_when:
+    jurisdiction: DC
+  tier: review
+  summary: >-
+    DC requires disclosure of a known underground storage tank on the property.
+  review_note: >-
+    Only applies if a tank exists or previously existed, which this intake does
+    not capture. Broker to confirm whether the property has, or ever had, an
+    underground storage tank. This citation is among the least verified in the
+    seed set.

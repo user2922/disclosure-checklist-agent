@@ -1,0 +1,52 @@
+# Virginia disclosure rules.
+#
+# SEED DATA. Every citation below is a starting point and must be verified
+# against current statute before the demo. It is not legal advice.
+
+- id: va_rpda
+  name: Residential Property Disclosure Act Statement
+  citation: "Va. Code § 55.1-700 et seq."
+  applies_when:
+    jurisdiction: VA
+  tier: required
+  summary: >-
+    The property is a Virginia residential resale, so the seller must provide
+    the Residential Property Disclosure Act statement, which in Virginia is a
+    disclaimer-style notice directing the buyer to exercise due diligence.
+
+- id: va_condo_resale
+  name: Condominium Act Resale Certificate
+  citation: "Va. Code § 55.1-1990"
+  applies_when:
+    jurisdiction: VA
+    property_type: condo
+  tier: required
+  summary: >-
+    The property is a Virginia condominium, so the seller must obtain and
+    deliver the resale certificate from the unit owners' association.
+
+- id: va_poa_packet
+  name: Property Owners' Association Act Disclosure Packet
+  citation: "Va. Code § 55.1-1808"
+  applies_when:
+    jurisdiction: VA
+    has_association: true
+    property_type: { ne: condo }
+  tier: required
+  summary: >-
+    The Virginia property is governed by a property owners' association, so the
+    seller must deliver the association disclosure packet to the purchaser.
+
+- id: va_septic_well
+  name: Septic System and Private Well Disclosures
+  citation: "Va. Code § 55.1-704 (area)"
+  applies_when:
+    jurisdiction: VA
+  tier: review
+  summary: >-
+    Virginia requires specific notices where a property is served by an onsite
+    sewage system or a private well.
+  review_note: >-
+    This intake does not capture water and sewer service, so whether these
+    notices apply cannot be determined from the six facts collected. Broker to
+    confirm whether the property is on public water and sewer.

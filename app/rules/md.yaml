@@ -1,0 +1,58 @@
+# Maryland disclosure rules.
+#
+# SEED DATA. Every citation below is a starting point and must be verified
+# against current statute before the demo. It is not legal advice.
+# md_lead_registration is among the least certain — see SPEC.md Open Questions.
+
+- id: md_residential_disclosure
+  name: Residential Property Disclosure and Disclaimer Statement
+  citation: "Md. Code, Real Prop. § 10-702"
+  applies_when:
+    jurisdiction: MD
+  tier: required
+  summary: >-
+    The property is a Maryland residential resale, so the seller must deliver
+    the § 10-702 statement, electing either to disclose known defects or to
+    disclaim.
+
+- id: md_condo_resale
+  name: Condominium Resale Certificate
+  citation: "Md. Code, Real Prop. § 11-135"
+  applies_when:
+    jurisdiction: MD
+    property_type: condo
+  tier: required
+  summary: >-
+    The property is a Maryland condominium, so the seller must provide the
+    resale certificate and supporting association documents.
+
+- id: md_hoa_disclosure
+  name: Homeowners Association Disclosures
+  citation: "Md. Code, Real Prop. § 11B-106"
+  applies_when:
+    jurisdiction: MD
+    has_association: true
+    property_type: { ne: condo }
+  tier: required
+  summary: >-
+    The Maryland property lies within a homeowners association, so the seller
+    must provide the disclosures the Maryland Homeowners Association Act
+    requires on resale.
+
+- id: md_lead_registration
+  name: Maryland Lead Poisoning Prevention Program Registration
+  citation: "Md. Code, Envir. § 6-801 et seq."
+  applies_when:
+    jurisdiction: MD
+    seller_occupancy: tenant_occupied
+    year_built: { lt: 1978 }
+  tier: review
+  summary: >-
+    The Maryland property is tenant-occupied and pre-1978, which brings it
+    within the state's rental registration and lead risk reduction regime.
+  review_note: >-
+    Registration, inspection certificates and risk reduction standards attach to
+    affected rental dwellings, and the obligations sit with the owner as
+    landlord rather than arising only at sale. Broker to confirm registration
+    status and what transfers to the buyer. This citation is among the least
+    verified in the seed set.

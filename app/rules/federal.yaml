@@ -1,0 +1,61 @@
+# Rules that apply regardless of jurisdiction.
+#
+# Despite the filename this is not only federal statute: it also holds the
+# financing- and property-type-driven review flags, which are not
+# jurisdiction-specific and would otherwise be triplicated across DC, MD and VA.
+# Recorded as decision 2 in SPEC.md, "Resolved during build planning".
+#
+# SEED DATA. Every citation below is a starting point and must be verified
+# against current statute before the demo. It is not legal advice.
+
+- id: fed_lead_paint
+  name: Lead-Based Paint Disclosure
+  citation: "42 U.S.C. § 4852d; 24 CFR Part 35"
+  applies_when:
+    year_built: { lt: 1978 }
+  tier: required
+  summary: >-
+    The property predates the 1978 lead-paint ban, so the seller must provide
+    the EPA lead hazard pamphlet, disclose known lead-based paint and hazards,
+    and give the buyer a 10-day opportunity to inspect.
+
+- id: fin_fha_appraisal
+  name: FHA Appraisal and Property Condition Requirements
+  citation: "HUD Handbook 4000.1 — program requirement, not a disclosure statute"
+  applies_when:
+    financing: fha
+  tier: review
+  summary: >-
+    The buyer is using FHA financing, which carries minimum property condition
+    requirements the appraiser will enforce.
+  review_note: >-
+    Not a seller disclosure. FHA appraisal conditions can require repairs before
+    closing and are not modeled here. Broker to confirm current requirements
+    with the lender.
+
+- id: fin_va_wdi
+  name: VA Financing — Appraisal and Wood-Destroying-Insect Inspection
+  citation: "38 C.F.R. Part 36; VA Lender's Handbook M26-7"
+  applies_when:
+    financing: va
+  tier: review
+  summary: >-
+    The buyer is using VA financing, which carries its own appraisal
+    requirements and regional wood-destroying-insect inspection conventions.
+  review_note: >-
+    Not a seller disclosure. Who pays for the WDI inspection, and whether one is
+    required at all, varies by region and is not modeled here. Broker to confirm.
+
+- id: prop_multi_family_review
+  name: Multi-Family Property — Additional Obligations Likely
+  citation: "Not modeled — jurisdiction-specific landlord-tenant and rent-roll requirements"
+  applies_when:
+    property_type: multi_family
+  tier: review
+  summary: >-
+    The property is multi-family, which typically carries tenant, lease and
+    rent-roll obligations beyond the standard resale disclosures.
+  review_note: >-
+    This intake captures a single occupancy status and cannot describe a
+    multi-unit building. Rent rolls, per-unit lease disclosures and any
+    rent-control or registration regime are out of scope. Broker must review.
