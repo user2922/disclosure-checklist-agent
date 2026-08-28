@@ -1,0 +1,49 @@
+# Render blueprint — a second public link on onrender.com.
+#
+# Why a mirror exists at all: the primary deployment is on Vercel, and some
+# networks (including the one this was built on) block *.vercel.app at DNS via
+# Cisco Umbrella. onrender.com is not in that category. Both deployments run the
+# same code and share the same Vercel Blob audit store, so the audit log is
+# consistent whichever link someone opens.
+#
+# Free tier caveat, which matters for a demo: the service sleeps after ~15
+# minutes idle and takes roughly a minute to wake. Open the URL a few minutes
+# before presenting so a judge never waits on a cold start.
+
+services:
+  - type: web
+    name: disclosure-checklist-agent
+    runtime: python
+    plan: free
+    region: ohio
+    branch: master
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.10
+
+      # Model id. Never hardcoded in the codebase.
+      - key: GEMINI_MODEL
+        value: gemini-flash-latest
+
+      # Must equal the URL people actually browse to, or the Origin check on
+      # /api/confirm rejects every confirmation with a 403. Update this if
+      # Render assigns a different hostname than the service name.
+      - key: APP_URL
+        value: https://disclosure-checklist-agent.onrender.com
+
+      # Secrets are never committed. Set these in the Render dashboard.
+      #
+      # BLOB_READ_WRITE_TOKEN is required: without it this instance falls back
+      # to a local-file audit log, which on a sleeping free-tier container is
+      # lost on every restart. Copy the value from the Vercel project so both
+      # deployments write to one store.
+      - key: BLOB_READ_WRITE_TOKEN
+        sync: false
+
+      # Optional. Unset means offline mode, which is a supported mode: no model
+      # is called and each item's wording is its rule's own summary text.
+      - key: GOOGLE_API_KEY
+        sync: false

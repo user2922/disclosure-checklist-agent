@@ -3,6 +3,7 @@
 DevFest DC 2026 Build-a-thon — Entry 3.
 
 **Live:** <https://disclosure-checklist-agent.vercel.app>
+**Mirror:** <https://disclosure-checklist-agent.onrender.com> — see below for why
 **Source:** <https://github.com/user2922/disclosure-checklist-agent>
 
 A DMV real estate agent enters six transaction facts. The app returns the seller
@@ -126,6 +127,22 @@ Setting `BLOB_READ_WRITE_TOKEN` switches `app/audit.py` to a Vercel Blob backend
 
 Deploy: `vercel deploy --prod`. Environment variables are set on the project;
 `BLOB_READ_WRITE_TOKEN` is injected automatically by the linked store.
+
+### The Render mirror, and why it exists
+
+Some networks block `*.vercel.app` at DNS. The network this was built on does:
+its resolver returns a Cisco Umbrella block page for every vercel.app host,
+including long-live deployments of unrelated projects, so the browser reports a
+certificate error. Nothing is wrong with the deployment — it is a category filter,
+and `onrender.com`, `run.app`, `fly.dev` and `netlify.app` are all unaffected on
+the same network.
+
+`render.yaml` deploys the identical code to Render as a second link. Both share
+one Vercel Blob audit store, so the log is consistent whichever URL is opened.
+
+Render's free tier sleeps after ~15 minutes idle and takes about a minute to
+wake. **Open the mirror a few minutes before demoing** so nobody waits on a cold
+start.
 
 ### Running the live agent instead of offline mode
 
