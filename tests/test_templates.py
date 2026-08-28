@@ -182,3 +182,38 @@ def test_every_rule_considered_appears_in_the_record(client: TestClient) -> None
     assert "4 of 9 apply" in page
     for rule_id in ("dc_topa", "dc_hoa_disclosure", "fin_fha_appraisal"):
         assert rule_id in page, f"{rule_id} missing — the log must show what was considered"
+
+
+def test_association_switch_is_actually_clickable(client: TestClient) -> None:
+    """Regression: the styled track covered the checkbox and ate every click.
+
+    pytest cannot click, so this asserts the two structural facts that make the
+    control work — a real label association, and a track that does not intercept
+    pointer events. Remove either and the switch goes dead again.
+    """
+    page = client.get("/").text
+    assert 'for="has_association"' in page, "the label must toggle the input"
+    assert 'id="has_association"' in page
+
+    from pathlib import Path
+
+    css = Path("app/templates/base.html").read_text(encoding="utf-8")
+    track = css[css.index(".switch .track {") : css.index(".switch .track {") + 220]
+    assert "pointer-events: none" in track, "the track must not swallow clicks"
+
+
+def test_association_toggle_round_trips_through_the_form(client: TestClient) -> None:
+    """On -> true, absent -> false, and the value reaches the result's facts."""
+    on = client.post("/api/checklist", data={**DC_TENANT, "has_association": "on"}).text
+    assert "association" in on
+
+    off = dict(DC_TENANT)
+    off.pop("has_association", None)
+    body = client.post("/api/checklist", json={**DC_TENANT, "has_association": False}).json()
+    assert body["facts"]["has_association"] is False
+
+    body_on = client.post("/api/checklist", json={**DC_TENANT, "has_association": True}).json()
+    assert body_on["facts"]["has_association"] is True
+    assert "dc_hoa_disclosure" not in {i["rule_id"] for i in body_on["required"]}, (
+        "condo + association must still exclude the HOA rule"
+    )

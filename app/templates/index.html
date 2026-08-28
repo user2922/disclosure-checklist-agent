@@ -38,14 +38,16 @@
     </div>
 
     <div class="field">
-      <div class="switch-row">
+      {# A real <label for>, so the words toggle the switch too — not just the
+         22px of track. #}
+      <label class="switch-row" for="has_association">
         <span class="lbl">Condo association or HOA</span>
         <span class="switch">
           <input id="has_association" name="has_association" type="checkbox"
                  {% if defaults.has_association %}checked{% endif %}>
-          <span aria-hidden="true"></span>
+          <span class="track" aria-hidden="true"></span>
         </span>
-      </div>
+      </label>
     </div>
 
     <div class="field">

@@ -122,17 +122,23 @@
                                  box-shadow: var(--shadow); }
     .seg input:focus-visible + label { outline: 2px solid var(--brand-ink); outline-offset: 1px; }
 
-    .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    .switch-row { cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px;
                   padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; }
     .switch-row .lbl { margin: 0; font-size: 13.5px; font-weight: 550; color: var(--ink-2); }
     .switch { position: relative; width: 38px; height: 22px; flex: none; }
-    .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
-    .switch span { position: absolute; inset: 0; background: #cdd4e0; border-radius: 999px; transition: background .15s; }
-    .switch span::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
+    /* The input must sit ABOVE the track it controls. The track is absolutely
+       positioned and comes later in the DOM, so without this it covers the
+       checkbox and swallows every click. pointer-events on the track is the
+       belt to that z-index brace. */
+    .switch input { position: absolute; inset: 0; z-index: 2; opacity: 0;
+                    width: 100%; height: 100%; margin: 0; cursor: pointer; }
+    .switch .track { position: absolute; inset: 0; pointer-events: none;
+                     background: #cdd4e0; border-radius: 999px; transition: background .15s; }
+    .switch .track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px;
                           background: #fff; border-radius: 50%; box-shadow: var(--shadow); transition: transform .15s; }
-    .switch input:checked + span { background: var(--brand-ink); }
-    .switch input:checked + span::after { transform: translateX(16px); }
-    .switch input:focus-visible + span { outline: 2px solid var(--brand-ink); outline-offset: 2px; }
+    .switch input:checked + .track { background: var(--brand-ink); }
+    .switch input:checked + .track::after { transform: translateX(16px); }
+    .switch input:focus-visible + .track { outline: 2px solid var(--brand-ink); outline-offset: 2px; }
 
     button {
       font: inherit; font-size: 14px; font-weight: 600; letter-spacing: -.005em;
