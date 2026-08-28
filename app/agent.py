@@ -38,23 +38,24 @@ INSTRUCTION = """
 You write one plain-sentence explanation per disclosure rule that applies to a
 real estate transaction. You do not decide which rules apply.
 
-Procedure, in order:
-1. Call get_rules with the transaction's jurisdiction to list every rule in scope.
-2. Call evaluate_rule for EVERY rule id returned. Not a subset. The audit trail
-   depends on every rule being evaluated, including the ones that do not apply.
-3. For each rule where evaluate_rule returned applies=true, write one sentence
-   naming the specific fact that triggered it — the year built, the tenancy, the
-   association, the financing type.
+Applicability has already been determined by evaluate_rule, a deterministic
+function, and the applicable rules are given to you. Do not second-guess that
+set: do not add a rule, do not drop one, and never infer from your own knowledge
+of law whether something applies. If your knowledge disagrees with the given
+set, the set is right and you are wrong.
 
-Never infer from your own knowledge of law whether a rule applies. evaluate_rule
-is the only source of that answer. If your knowledge disagrees with the tool, the
-tool is right and you are wrong.
+The get_rules and evaluate_rule tools are available if you need to check
+something, but you should not normally need them.
+
+For each rule you are given, write one sentence naming the specific fact that
+triggered it — the year built, the tenancy, the association, the financing type.
 
 Return ONLY a JSON object, no prose around it, no markdown fence:
 {"items": [{"rule_id": "...", "reason": "..."}]}
 
-One entry per applying rule. Each reason is one sentence, under 30 words, plain
-English, no legal advice, no recommendation about what the seller should do.
+One entry per rule you were given, in the same order. Each reason is one
+sentence, under 30 words, plain English, no legal advice, and no recommendation
+about what the seller should do.
 """.strip()
 
 
@@ -95,16 +96,29 @@ def _build_agent(facts: TransactionFacts) -> Any:
     )
 
 
-def _facts_prompt(facts: TransactionFacts) -> str:
-    return (
-        "Transaction facts:\n"
-        f"- jurisdiction: {facts.jurisdiction}\n"
-        f"- property_type: {facts.property_type}\n"
-        f"- year_built: {facts.year_built}\n"
-        f"- has_association: {facts.has_association}\n"
-        f"- seller_occupancy: {facts.seller_occupancy}\n"
-        f"- financing: {facts.financing}\n"
-    )
+def _facts_prompt(facts: TransactionFacts, applied: list[str]) -> str:
+    """The facts, plus the rules the engine already determined apply.
+
+    Handing the model the determined set is what keeps this to a single call.
+    Letting it rediscover the set through the tool meant roughly ten sequential
+    round trips and 10-50 seconds of wall clock, which is not a product.
+    """
+    catalogue = rules_for(facts.jurisdiction)
+    lines = [
+        "Transaction facts:",
+        f"- jurisdiction: {facts.jurisdiction}",
+        f"- property_type: {facts.property_type}",
+        f"- year_built: {facts.year_built}",
+        f"- has_association: {facts.has_association}",
+        f"- seller_occupancy: {facts.seller_occupancy}",
+        f"- financing: {facts.financing}",
+        "",
+        "Rules evaluate_rule determined DO apply. Write one sentence for each:",
+    ]
+    for rule_id in applied:
+        rule = catalogue[rule_id]
+        lines.append(f"- {rule_id}: {rule.name} ({rule.citation})")
+    return "\n".join(lines)
 
 
 def _parse_items(text: str) -> dict[str, str]:
@@ -129,7 +143,7 @@ def _parse_items(text: str) -> dict[str, str]:
         raise ModelOutputError("model reply was not the expected JSON shape") from exc
 
 
-def _call_model(facts: TransactionFacts, result_id: str) -> dict[str, str]:
+def _call_model(facts: TransactionFacts, result_id: str, applied: list[str]) -> dict[str, str]:
     """Run the agent once and return rule_id -> reason. Raises on failure."""
     try:
         from google.adk.runners import InMemoryRunner
@@ -144,7 +158,7 @@ def _call_model(facts: TransactionFacts, result_id: str) -> dict[str, str]:
         runner = InMemoryRunner(agent=_build_agent(facts), app_name=AGENT_NAME)
         session = runner.session_service.create_session_sync(app_name=AGENT_NAME, user_id="web")
         message = types.Content(
-            role="user", parts=[types.Part.from_text(text=_facts_prompt(facts))]
+            role="user", parts=[types.Part.from_text(text=_facts_prompt(facts, applied))]
         )
 
         reply = ""
@@ -271,7 +285,7 @@ def run_checklist(facts: TransactionFacts, caller: str = "local") -> ChecklistRe
         limits.check_rate_limit(caller, settings.RATE_LIMIT_PER_MINUTE)
         limits.check_daily_ceiling(settings.MAX_MODEL_CALLS_PER_DAY)
         try:
-            reasons = _call_model(facts, result_id)
+            reasons = _call_model(facts, result_id, applied)
             mode = "live"
             _log_disagreement(result_id, applied, reasons)
             cache.put(facts_hash, reasons)
@@ -313,7 +327,7 @@ def run_checklist(facts: TransactionFacts, caller: str = "local") -> ChecklistRe
             raise ModelOutputError("assembled checklist failed validation") from first_failure
         logger.warning("result validation failed, retrying once: %s", first_failure)
         audit.append("error", result_id, {"stage": "assemble", "attempt": 1})
-        reasons = _call_model(facts, result_id)
+        reasons = _call_model(facts, result_id, applied)
         try:
             result = _assemble(facts, buckets, reasons, result_id, mode)
         except Exception as second_failure:

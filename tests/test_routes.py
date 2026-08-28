@@ -170,7 +170,7 @@ def test_stubbed_live_mode_matches_offline_membership(
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     get_settings.cache_clear()
     monkeypatch.setattr(
-        agent_mod, "_call_model", lambda facts, result_id: {"dc_topa": "stubbed prose"}
+        agent_mod, "_call_model", lambda facts, result_id, applied: {"dc_topa": "stubbed prose"}
     )
     live = client.post("/api/checklist", json=FIXTURES["dc_condo_tenant"]).json()
 

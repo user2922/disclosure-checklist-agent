@@ -34,7 +34,7 @@ def isolated(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 
 def stub_model(reasons: dict[str, str], counter: list[int]) -> Callable[..., dict[str, str]]:
-    def _stub(facts, result_id):  # noqa: ANN001, ARG001
+    def _stub(facts, result_id, applied):  # noqa: ANN001, ARG001
         counter.append(1)
         audit.append(
             "model_call", result_id, {"mode": "live", "input_tokens": 10, "output_tokens": 5}
@@ -154,7 +154,7 @@ def test_daily_ceiling_blocks_the_second_uncached_request(isolated: Path, monkey
     get_settings.cache_clear()
     calls: list[int] = []
 
-    def _stub(facts, result_id):  # noqa: ANN001, ARG001
+    def _stub(facts, result_id, applied):  # noqa: ANN001, ARG001
         calls.append(1)
         limits.record_model_call()
         return {}
@@ -220,7 +220,7 @@ def test_model_unavailable_names_the_model_id(isolated: Path, monkeypatch) -> No
         runners, "InMemoryRunner", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("404"))
     )
     with pytest.raises(ModelUnavailable) as excinfo:
-        agent_mod._call_model(load_fixture("md_1970_sfh"), "rid")
+        agent_mod._call_model(load_fixture("md_1970_sfh"), "rid", ["fed_lead_paint"])
     assert "no-such-model-xyz" in str(excinfo.value)
 
 
@@ -298,7 +298,7 @@ def test_model_failure_degrades_instead_of_failing_the_request(isolated: Path, m
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     get_settings.cache_clear()
 
-    def boom(facts, result_id):  # noqa: ANN001, ARG001
+    def boom(facts, result_id, applied):  # noqa: ANN001, ARG001
         raise ModelUnavailable("provider down")
 
     monkeypatch.setattr(agent_mod, "_call_model", boom)
@@ -326,7 +326,7 @@ def test_degradation_is_recorded_not_silent(isolated: Path, monkeypatch) -> None
     monkeypatch.setattr(
         agent_mod,
         "_call_model",
-        lambda f, r: (_ for _ in ()).throw(ModelOutputError("garbage")),
+        lambda f, r, a: (_ for _ in ()).throw(ModelOutputError("garbage")),
     )
 
     agent_mod.run_checklist(load_fixture("md_1970_sfh"))
@@ -343,7 +343,7 @@ def test_rate_limit_still_refuses_and_does_not_degrade(isolated: Path, monkeypat
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     monkeypatch.setenv("RATE_LIMIT_PER_MINUTE", "1")
     get_settings.cache_clear()
-    monkeypatch.setattr(agent_mod, "_call_model", lambda f, r: {})
+    monkeypatch.setattr(agent_mod, "_call_model", lambda f, r, a: {})
 
     agent_mod.run_checklist(load_fixture("md_1970_sfh"), caller="9.9.9.9")
     with pytest.raises(RateLimitExceeded):
