@@ -26,7 +26,7 @@ services:
 
       # Model id. Never hardcoded in the codebase.
       - key: GEMINI_MODEL
-        value: gemini-flash-latest
+        value: gemini-3.6-flash
 
       # Must equal the URL people actually browse to, or the Origin check on
       # /api/confirm rejects every confirmation with a 403. Update this if

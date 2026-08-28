@@ -50,12 +50,32 @@ has no `win_arm64` wheel and fails to compile. `requirements.txt` pins plain
 
 | Bucket | Variable | Notes |
 |---|---|---|
-| REQUIRED | `GEMINI_MODEL` | Model id. Never hardcoded anywhere |
+| REQUIRED | `GEMINI_MODEL` | Model id. Never hardcoded anywhere. Currently `gemini-3.6-flash` — see below |
 | REQUIRED | `APP_URL` | Origin allowed to POST `/api/confirm`. Must match the URL you browse to |
 | REQUIRED | `AUDIT_LOG_PATH` | Default `./audit.jsonl` |
 | FEATURE | `GOOGLE_API_KEY` | **Unset is a supported mode**, see below |
 | OPTIONAL | `RATE_LIMIT_PER_MINUTE` | Default 10 |
 | OPTIONAL | `MAX_MODEL_CALLS_PER_DAY` | Default 200 |
+
+### Choosing the model id
+
+Verified against the live API on 2026-08-28, because the wrong id fails in three
+different ways and only one of them is obvious:
+
+| Id | Result |
+|---|---|
+| `gemini-3.6-flash` | **works** — current model |
+| `gemini-2.5-flash` | 404, "no longer available to new users" |
+| `gemini-flash-latest` | 503, "currently experiencing high demand", persistently |
+
+Google's own 404 body names the replacement, which is how `gemini-3.6-flash` was
+found. Read the error rather than guessing at ids.
+
+Free-tier quota is per-minute. Firing several requests in a few seconds returns
+`_ResourceExhaustedError` and the app degrades; at human pace it stays `live`.
+A live request takes **12-14 seconds**, because the ADK agent calls
+`evaluate_rule` once per rule in scope. An identical repeat is served from cache
+in under a second.
 
 ### Four modes, all recorded and all shown on the page
 
