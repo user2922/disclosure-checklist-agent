@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     # FEATURE — unset means offline mode, which is a supported mode, not an error.
     GOOGLE_API_KEY: str | None = None
 
+    # FEATURE — when set, the audit log goes to Vercel Blob instead of a local
+    # file. Required on any serverless host, where the filesystem is per-instance
+    # and ephemeral. Injected automatically by the linked Blob store.
+    BLOB_READ_WRITE_TOKEN: str | None = None
+
     # OPTIONAL
     RATE_LIMIT_PER_MINUTE: int = Field(default=10, ge=1)
     MAX_MODEL_CALLS_PER_DAY: int = Field(default=200, ge=1)

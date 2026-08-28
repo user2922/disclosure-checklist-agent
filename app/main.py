@@ -20,7 +20,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import ValidationError
 
-from app import audit
+from app import audit, blobstore
 from app.agent import run_checklist
 from app.config import get_settings
 from app.errors import (
@@ -68,6 +68,24 @@ app = FastAPI(
     openapi_url=None,
     lifespan=lifespan,
 )
+
+
+@app.middleware("http")
+async def _flush_audit(request: Request, call_next):
+    """Buffer audit entries for the request, then write them as one object.
+
+    Only active when a Blob token is configured, i.e. on a serverless host. The
+    flush runs in a finally so a failed request still records what it did before
+    it failed — an audit log that only captures successes is not an audit log.
+    """
+    token = get_settings().BLOB_READ_WRITE_TOKEN
+    if not token:
+        return await call_next(request)
+    blobstore.begin_request()
+    try:
+        return await call_next(request)
+    finally:
+        blobstore.flush(token)
 
 
 # --------------------------------------------------------------- error handling

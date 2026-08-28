@@ -27,6 +27,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, NamedTuple
 
+from app import blobstore
 from app.schemas import AuditEntry, AuditKind, TransactionFacts
 
 
@@ -44,6 +45,23 @@ class RuleVerdict(NamedTuple):
     applies: bool
     tier: str
     review_note: str | None
+
+
+def _blob_token(path: str | Path | None) -> str | None:
+    """The Blob token, but only when no explicit path was requested.
+
+    An explicit `path` always means the file backend — that is what keeps the
+    whole test suite on tmp_path regardless of how the environment is
+    configured.
+    """
+    if path is not None:
+        return None
+    try:
+        from app.config import get_settings
+
+        return get_settings().BLOB_READ_WRITE_TOKEN or None
+    except Exception:
+        return None
 
 
 def _resolve_path(path: str | Path | None) -> Path:
@@ -84,6 +102,11 @@ def append(
         "result_id": entry.result_id,
         "payload": entry.payload,
     }
+
+    token = _blob_token(path)
+    if token:
+        blobstore.buffer(record)
+        return entry
 
     target = _resolve_path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -137,6 +160,17 @@ def read_entries(
 
     A missing log file is an empty log, not an error — nothing has happened yet.
     """
+    token = _blob_token(path)
+    if token:
+        records, skipped = blobstore.read_records(token, result_id)
+        parsed: list[AuditEntry] = []
+        for record in records:
+            try:
+                parsed.append(AuditEntry.model_validate(record))
+            except Exception:
+                skipped += 1
+        return AuditRead(entries=parsed[:limit], skipped=skipped)
+
     target = _resolve_path(path)
     if not target.exists():
         return AuditRead(entries=[], skipped=0)
@@ -169,5 +203,9 @@ def result_exists(result_id: str, *, path: str | Path | None = None) -> bool:
     /api/confirm depends on this for its 404. Rule evaluations alone do not
     count: a result that never completed cannot be confirmed.
     """
+    token = _blob_token(path)
+    if token:
+        return blobstore.result_exists(token, result_id)
+
     read = read_entries(limit=10**9, result_id=result_id, path=path)
     return any(entry.kind == "result" for entry in read.entries)

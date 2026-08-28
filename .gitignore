@@ -24,3 +24,10 @@ __pycache__/
 Thumbs.db
 .vscode/
 .idea/
+
+.vercel/
+.env*
+!.env.example
+
+# Scratch
+blobsdk/

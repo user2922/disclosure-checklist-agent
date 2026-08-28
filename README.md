@@ -2,6 +2,9 @@
 
 DevFest DC 2026 Build-a-thon — Entry 3.
 
+**Live:** <https://disclosure-checklist-agent.vercel.app>
+**Source:** <https://github.com/user2922/disclosure-checklist-agent>
+
 A DMV real estate agent enters six transaction facts. The app returns the seller
 disclosure obligations for that transaction, each citing its governing rule, plus
 a separate list of items flagged for licensed-broker review. Every rule the agent
@@ -30,7 +33,7 @@ uvicorn app.main:app --reload --port 8080
 Then open <http://localhost:8080>.
 
 ```
-Test:   pytest -q                     82 tests, no API key needed
+Test:   pytest -q                     86 tests, no API key needed
 Lint:   ruff check . ; ruff format .
 Smoke:  bash scripts/smoke.sh         needs a running server; 0 pass, 1 fail, 2 unreachable
 Secrets: bash scripts/scan-secrets.sh
@@ -99,13 +102,49 @@ Start the server, delete `audit.jsonl` first so the log tells a clean story.
 5. **Open `/audit`.** Nine `rule_evaluated` rows for DC, including the five rules
    that did **not** apply, then the model call, the result, and the confirmation.
 
+## Deployment
+
+Vercel, as a Python serverless function (`api/index.py` re-exports the same ASGI
+app; `vercel.json` rewrites every path to it).
+
+**The audit log does not use the local file backend in production, and it must
+not.** Vercel's filesystem is read-only except `/tmp`, and `/tmp` is per-instance
+and ephemeral — a checklist generated on one instance and confirmed on another
+would 404, and `/audit` would show nothing. Since the audit log is the entire
+claim of this product, that is a correctness failure, not a cosmetic one.
+
+Setting `BLOB_READ_WRITE_TOKEN` switches `app/audit.py` to a Vercel Blob backend
+(`app/blobstore.py`). The design keeps the guarantees the file backend had:
+
+- One blob per request, written once under a key no other write will choose.
+  No read-modify-write anywhere, so concurrent requests cannot lose each other's
+  entries — which a single growing object would.
+- The result id is in the pathname, so `result_exists()` and per-result filtering
+  are one list call with no content fetch.
+- Entries are buffered for the life of a request and flushed in a `finally`, so a
+  request that fails still records what it did before failing.
+
+Deploy: `vercel deploy --prod`. Environment variables are set on the project;
+`BLOB_READ_WRITE_TOKEN` is injected automatically by the linked store.
+
+### Running the live agent instead of offline mode
+
+The deployment has no `GOOGLE_API_KEY`, so it runs in offline mode and says so on
+every result. To switch it on:
+
+```
+vercel env add GOOGLE_API_KEY production     # paste the key when prompted
+vercel deploy --prod
+```
+
 ## Limitations
 
 Say these out loud rather than letting someone infer otherwise.
 
-- **The audit log is on an ephemeral local filesystem.** It does not survive a
-  process restart, and on Cloud Run it does not survive an instance restart. A
-  real deployment writes to Firestore or a GCS object.
+- **Audit durability depends on the backend.** In production the log is in
+  Vercel Blob and is shared across instances and durable. Run locally with no
+  `BLOB_READ_WRITE_TOKEN` and it is a local file that does not survive deleting
+  it — which the demo run order does deliberately, to start clean.
 - **`confirmed_by` is a typed name, not a verified identity.** There is no
   authentication in this build. The audit entry records
   `identity_verified: false` for exactly this reason. The log proves *that*
@@ -118,7 +157,13 @@ Say these out loud rather than letting someone infer otherwise.
 - **Not legal advice.** The fixed disclaimer renders on every result and the
   schema rejects any result whose disclaimer is not byte-identical to it.
 - **In-process rate limiting and caching.** Correct for a single instance,
-  wrong for a multi-instance deployment, which would need shared state.
+  wrong for a multi-instance deployment, which would need shared state. On
+  Vercel each lambda therefore enforces its own limit and keeps its own cache,
+  so the effective ceilings are per-instance rather than global. The audit log
+  is shared; these are not.
+- **The deployed instance runs in offline mode** unless a `GOOGLE_API_KEY` is
+  added, so what it demonstrates is the deterministic rules engine and the audit
+  trail, not the ADK agent writing prose.
 
 ## Layout
 
@@ -133,7 +178,7 @@ app/
   schemas.py   every shape used by more than one module
   limits.py    fail-closed rate limit and daily ceiling
   cache.py     bounded response cache keyed on the facts hash
-tests/         82 tests, offline
+tests/         86 tests, offline
 scripts/       smoke.sh, scan-secrets.sh
 ```
 

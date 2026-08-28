@@ -12,10 +12,16 @@ set -uo pipefail
 
 cd "$(dirname "$0")/.." || { echo "ERROR: cannot reach project root"; exit 2; }
 
-PRUNE=( -name .git -o -name .venv -o -name node_modules -o -name __pycache__ \
-        -o -name .pytest_cache -o -name .ruff_cache )
-
-mapfile -t FILES < <(find . \( "${PRUNE[@]}" \) -prune -o -type f -print 2>/dev/null)
+# Scan the TRACKED tree when this is a git repo. That is what "no secrets in
+# the repo" actually means: a gitignored .env.local holding a real token is
+# correct, not a finding. Outside a repo, fall back to walking the directory.
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  mapfile -t FILES < <(git ls-files)
+else
+  PRUNE=( -name .git -o -name .venv -o -name node_modules -o -name __pycache__ \
+          -o -name .pytest_cache -o -name .ruff_cache )
+  mapfile -t FILES < <(find . \( "${PRUNE[@]}" \) -prune -o -type f -print 2>/dev/null)
+fi
 
 COUNT=${#FILES[@]}
 if [ "$COUNT" -eq 0 ]; then
@@ -29,6 +35,8 @@ PATTERNS=(
   '-----BEGIN [A-Z ]*PRIVATE KEY-----|PEM private key'
   '"private[_]key"[[:space:]]*:|service-account private_key field'
   'sk-[A-Za-z0-9]{20,}|sk- prefixed API token'
+  'eyJ[A-Za-z0-9_-]{10,}[.]eyJ[A-Za-z0-9_-]{10,}[.]|JWT (OIDC / Vercel / Supabase)'
+  'vercel_blob_rw_[A-Za-z0-9_]{20,}|Vercel Blob read-write token'
 )
 
 HITS=0

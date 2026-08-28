@@ -1,0 +1,6 @@
+# Development and test only. Not installed on the serverless deployment —
+# shipping pytest and ruff in a lambda is dead weight.
+-r requirements.txt
+pytest==9.1.1
+ruff==0.16.5
+watchfiles==1.2.0

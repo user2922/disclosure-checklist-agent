@@ -25,8 +25,8 @@ PyYAML==6.0.3
 # Platform pin — see note above
 cryptography==46.0.3
 
-# Dev / test
-pytest==9.1.1
+# Runtime HTTP client — used by the Vercel Blob audit backend, not just tests
 httpx==0.28.1
-ruff==0.16.5
-watchfiles==1.2.0
+
+# Dev and test dependencies live in requirements-dev.txt so they are not
+# shipped to the serverless function.
