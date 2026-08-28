@@ -138,7 +138,7 @@ def index(request: Request) -> Any:
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={"defaults": FORM_DEFAULTS, "result": None, "mode": get_settings().mode},
+        context={"defaults": FORM_DEFAULTS, "result": None, "page": "checklist"},
     )
 
 
@@ -173,7 +173,7 @@ async def api_checklist(request: Request) -> Any:
     return templates.TemplateResponse(
         request=request,
         name="index.html",
-        context={"defaults": raw, "result": result, "mode": result.mode},
+        context={"defaults": raw, "result": result, "page": "checklist"},
     )
 
 
@@ -219,7 +219,7 @@ def audit_page(request: Request) -> Any:
     return templates.TemplateResponse(
         request=request,
         name="audit.html",
-        context={"entries": read.entries, "skipped": read.skipped},
+        context={"entries": read.entries, "skipped": read.skipped, "page": "audit"},
     )
 
 

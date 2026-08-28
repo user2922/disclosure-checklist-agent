@@ -1,161 +1,212 @@
 {% extends "base.html" %}
 {% block content %}
 
-{# Option values are the enum values from app/schemas.py, byte-identical. A
-   mismatch here fails validation at the edge and is invisible in the markup. #}
-<form class="intake" method="post" action="/api/checklist">
-  <div>
-    <label for="jurisdiction">Jurisdiction</label>
-    <select id="jurisdiction" name="jurisdiction" required>
-      {% for v in ["DC", "MD", "VA"] %}
-      <option value="{{ v }}"{% if defaults.jurisdiction == v %} selected{% endif %}>{{ v }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div>
-    <label for="property_type">Property type</label>
-    <select id="property_type" name="property_type" required>
-      {% for v, text in [("single_family", "Single family"), ("condo", "Condominium"),
-                         ("townhome_hoa", "Townhome / HOA"), ("multi_family", "Multi-family")] %}
-      <option value="{{ v }}"{% if defaults.property_type == v %} selected{% endif %}>{{ text }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div>
-    <label for="year_built">Year built</label>
-    <input id="year_built" name="year_built" type="number" min="1800" max="2026"
-           value="{{ defaults.year_built }}" required>
-  </div>
-  <div class="checkbox">
-    <input id="has_association" name="has_association" type="checkbox"
-           {% if defaults.has_association %}checked{% endif %}>
-    <label for="has_association" style="text-transform:none;font-size:.95rem;">Condo association or HOA</label>
-  </div>
-  <div>
-    <label for="seller_occupancy">Seller occupancy</label>
-    <select id="seller_occupancy" name="seller_occupancy" required>
-      {% for v, text in [("owner_occupied", "Owner occupied"), ("tenant_occupied", "Tenant occupied"),
-                         ("vacant", "Vacant")] %}
-      <option value="{{ v }}"{% if defaults.seller_occupancy == v %} selected{% endif %}>{{ text }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div>
-    <label for="financing">Financing</label>
-    <select id="financing" name="financing" required>
-      {% for v, text in [("conventional", "Conventional"), ("fha", "FHA"),
-                         ("va", "VA"), ("cash", "Cash")] %}
-      <option value="{{ v }}"{% if defaults.financing == v %} selected{% endif %}>{{ text }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <div><button type="submit">Generate checklist</button></div>
-</form>
+<div class="split">
 
-{% if result %}
+  {# ------------------------------------------------------------- intake #}
+  {# Control values are the enum values from app/schemas.py, byte-identical.
+     A mismatch fails validation at the edge and is invisible in the markup,
+     which is why tests/test_templates.py asserts them as a set. #}
+  <form class="card panel" method="post" action="/api/checklist">
+    <h2>Transaction facts</h2>
 
-{# A rule can appear in both Required and Broker Review. That duplication is the
-   product — a required obligation whose scope a broker must still confirm. #}
-{% macro bucket(title, items, is_review) %}
-  <h2>{{ title }} <span class="count">{{ items | length }}</span></h2>
-  {% if items %}
-  <ul class="items{% if is_review %} review{% endif %}">
-    {% for item in items %}
-    <li>
-      <span class="name">{{ item.name }}</span>
-      <span class="citation">{{ item.citation }}</span>
-      {{ item.reason }}
-      {% if item.review_note %}
-      <div class="note"><strong>Broker must confirm</strong><br>{{ item.review_note }}</div>
+    <div class="field">
+      <span class="lbl">Jurisdiction</span>
+      <div class="seg">
+        {% for v in ["DC", "MD", "VA"] %}
+        <input type="radio" id="j-{{ v }}" name="jurisdiction" value="{{ v }}"
+               {% if defaults.jurisdiction == v %}checked{% endif %} required>
+        <label for="j-{{ v }}">{{ v }}</label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="property_type">Property type</label>
+      <select id="property_type" name="property_type" required>
+        {% for v, text in [("single_family", "Single family"), ("condo", "Condominium"),
+                           ("townhome_hoa", "Townhome / HOA"), ("multi_family", "Multi-family")] %}
+        <option value="{{ v }}"{% if defaults.property_type == v %} selected{% endif %}>{{ text }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="year_built">Year built</label>
+      <input id="year_built" name="year_built" type="number" min="1800" max="2026"
+             value="{{ defaults.year_built }}" required>
+    </div>
+
+    <div class="field">
+      <div class="switch-row">
+        <span class="lbl">Condo association or HOA</span>
+        <span class="switch">
+          <input id="has_association" name="has_association" type="checkbox"
+                 {% if defaults.has_association %}checked{% endif %}>
+          <span aria-hidden="true"></span>
+        </span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="seller_occupancy">Seller occupancy</label>
+      <select id="seller_occupancy" name="seller_occupancy" required>
+        {% for v, text in [("owner_occupied", "Owner occupied"),
+                           ("tenant_occupied", "Tenant occupied"), ("vacant", "Vacant")] %}
+        <option value="{{ v }}"{% if defaults.seller_occupancy == v %} selected{% endif %}>{{ text }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="financing">Financing</label>
+      <select id="financing" name="financing" required>
+        {% for v, text in [("conventional", "Conventional"), ("fha", "FHA"),
+                           ("va", "VA"), ("cash", "Cash")] %}
+        <option value="{{ v }}"{% if defaults.financing == v %} selected{% endif %}>{{ text }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit">Generate checklist</button>
+  </form>
+
+  {# ------------------------------------------------------------- results #}
+  <div>
+  {% if not result %}
+    <div class="pagehead">
+      <h1>Seller disclosure checklist</h1>
+      <p class="lede">Enter six transaction facts. Which rules apply is computed in code —
+        the model only writes the one-sentence explanation on each item. Every rule
+        considered, including the ones that do not apply, is written to the audit log.</p>
+    </div>
+    <div class="empty">Set the facts on the left and generate a checklist.</div>
+  {% else %}
+
+    <div class="resulthead">
+      <div class="stats">
+        <div class="stat req"><b>{{ result.required | length }}</b><span>Required</span></div>
+        <div class="stat rev"><b>{{ result.broker_review | length }}</b><span>Broker review</span></div>
+        <div class="stat"><b>{{ result.rules_evaluated }}</b><span>Rules evaluated</span></div>
+      </div>
+      <span class="pill {{ result.mode }}">{{ result.mode }}</span>
+    </div>
+
+    {# A rule can appear in both Required and Broker Review. That duplication is
+       the product — a required obligation whose scope a broker must confirm. #}
+    {% macro bucket(title, items, kind) %}
+    <section class="bucket {{ kind }}">
+      <header>
+        <h2>{{ title }}</h2>
+        <span class="rule">{{ items | length }}</span>
+      </header>
+      {% if items %}
+      <ul class="items">
+        {% for item in items %}
+        <li class="item">
+          <div class="item-top">
+            <span class="name">{{ item.name }}</span>
+            <span class="chip {{ item.tier }}">{{ item.tier }}</span>
+          </div>
+          <div class="citation">{{ item.citation }}</div>
+          <div class="reason">{{ item.reason }}</div>
+          {% if item.review_note %}
+          <div class="note"><strong>Broker must confirm</strong>{{ item.review_note }}</div>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="empty">No items in this category for these facts.</div>
       {% endif %}
-    </li>
-    {% endfor %}
-  </ul>
-  {% else %}
-  <p class="empty">No items in this category for these facts.</p>
-  {% endif %}
-{% endmacro %}
+    </section>
+    {% endmacro %}
 
-{{ bucket("Required", result.required, false) }}
-{% if result.likely %}{{ bucket("Likely", result.likely, false) }}{% endif %}
-{{ bucket("Broker Review", result.broker_review, true) }}
+    {{ bucket("Required", result.required, "required") }}
+    {% if result.likely %}{{ bucket("Likely", result.likely, "likely") }}{% endif %}
+    {{ bucket("Broker review", result.broker_review, "review") }}
 
-<p class="modeline{% if result.mode in ['offline', 'degraded'] %} offline{% endif %}">
-  {% if result.mode == 'offline' %}
-    No model was called. Wording below each item is the rule's own summary text.
-    {{ result.rules_evaluated }} rules evaluated.
-  {% elif result.mode == 'degraded' %}
-    The model was unavailable, so wording fell back to each rule's own summary
-    text. Which rules apply is unaffected — that is decided in code, not by the
-    model. {{ result.rules_evaluated }} rules evaluated.
-  {% elif result.mode == 'cached' %}
-    Wording reused from an identical earlier request; no model call was made.
-    {{ result.rules_evaluated }} rules evaluated.
-  {% else %}
-    Wording written by the model; the rules that apply were decided in code.
-    {{ result.rules_evaluated }} rules evaluated.
-  {% endif %}
-</p>
+    <p class="modeline{% if result.mode in ['offline', 'degraded'] %} warn{% endif %}">
+      {%- if result.mode == 'offline' -%}
+        No model was called. Wording on each item is the rule's own summary text.
+      {%- elif result.mode == 'degraded' -%}
+        The model was unavailable, so wording fell back to each rule's own summary text.
+        Which rules apply is unaffected — that is decided in code, not by the model.
+      {%- elif result.mode == 'cached' -%}
+        Wording reused from an identical earlier request; no model call was made.
+      {%- else -%}
+        Wording written by the model. The rules that apply were decided in code.
+      {%- endif %}
+      {{ result.rules_evaluated }} rules evaluated for this transaction.
+    </p>
 
-<p class="disclaimer">{{ result.disclaimer }}</p>
+    <div class="disclaimer">
+      <svg width="17" height="17" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+        <circle cx="10" cy="10" r="8.4" stroke="currentColor" stroke-width="1.6"/>
+        <path d="M10 6v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="10" cy="14.1" r="1" fill="currentColor"/>
+      </svg>
+      <span>{{ result.disclaimer }}</span>
+    </div>
 
-<form class="confirm" id="confirm-form" method="post" action="/api/confirm">
-  <input type="hidden" name="result_id" value="{{ result.result_id }}">
-  <div>
-    <label for="confirmed_by">Confirmed by</label>
-    <input id="confirmed_by" name="confirmed_by" type="text" maxlength="120"
-           placeholder="Broker name" required>
-  </div>
-  <button type="submit" id="confirm-button">Confirm checklist</button>
-</form>
-<div id="confirm-result" hidden></div>
+    <form class="card confirm" id="confirm-form" method="post" action="/api/confirm">
+      <input type="hidden" name="result_id" value="{{ result.result_id }}">
+      <div class="field">
+        <label for="confirmed_by">Confirmed by</label>
+        <input id="confirmed_by" name="confirmed_by" type="text" maxlength="120"
+               placeholder="Broker name" required autocomplete="off">
+      </div>
+      <button type="submit" id="confirm-button">Confirm checklist</button>
+    </form>
+    <div id="confirm-result" hidden></div>
 
-<script>
-  // Posts the confirmation without losing the checklist from the screen.
-  // The button never re-enables: a second confirmation is a second decision.
-  (function () {
-    var form = document.getElementById("confirm-form");
-    var button = document.getElementById("confirm-button");
-    var output = document.getElementById("confirm-result");
+    <script>
+      // Confirms without losing the checklist from the screen. The button never
+      // re-enables: a second confirmation would be a second decision.
+      (function () {
+        var form = document.getElementById("confirm-form");
+        var button = document.getElementById("confirm-button");
+        var output = document.getElementById("confirm-result");
 
-    form.addEventListener("submit", function (event) {
-      event.preventDefault();
-      button.disabled = true;
-      button.textContent = "Confirming…";
+        form.addEventListener("submit", function (event) {
+          event.preventDefault();
+          button.disabled = true;
+          button.textContent = "Confirming…";
 
-      fetch("/api/confirm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          result_id: form.result_id.value,
-          confirmed_by: form.confirmed_by.value
-        })
-      })
-        .then(function (r) { return r.json().then(function (b) { return [r.ok, b]; }); })
-        .then(function (pair) {
-          var ok = pair[0], body = pair[1];
-          output.hidden = false;
-          if (ok) {
-            button.textContent = "Confirmed";
-            output.className = "confirmed";
-            output.textContent =
-              "Confirmed by " + body.confirmed_by + " at " + body.confirmed_at +
-              ". Recorded as a typed name, not a verified identity.";
-          } else {
-            button.textContent = "Confirmation failed";
-            output.className = "note";
-            output.textContent = body.error || "Confirmation failed.";
-          }
-        })
-        .catch(function () {
-          output.hidden = false;
-          output.className = "note";
-          output.textContent = "Confirmation could not be sent.";
-          button.textContent = "Confirmation failed";
+          fetch("/api/confirm", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              result_id: form.result_id.value,
+              confirmed_by: form.confirmed_by.value
+            })
+          })
+            .then(function (r) { return r.json().then(function (b) { return [r.ok, b]; }); })
+            .then(function (pair) {
+              var ok = pair[0], body = pair[1];
+              output.hidden = false;
+              if (ok) {
+                button.textContent = "Confirmed";
+                output.className = "confirmed";
+                output.textContent =
+                  "Confirmed by " + body.confirmed_by + " at " + body.confirmed_at +
+                  " — recorded as a typed name, not a verified identity.";
+              } else {
+                button.textContent = "Confirmation failed";
+                output.className = "failed";
+                output.textContent = body.error || "Confirmation failed.";
+              }
+            })
+            .catch(function () {
+              output.hidden = false;
+              output.className = "failed";
+              output.textContent = "Confirmation could not be sent.";
+              button.textContent = "Confirmation failed";
+            });
         });
-    });
-  })();
-</script>
-
-{% endif %}
+      })();
+    </script>
+  {% endif %}
+  </div>
+</div>
 {% endblock %}

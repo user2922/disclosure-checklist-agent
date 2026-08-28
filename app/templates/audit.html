@@ -2,52 +2,57 @@
 {% block title %}Audit log — Disclosure Checklist Agent{% endblock %}
 {% block content %}
 
-<h2>Audit log <span class="count">{{ entries | length }} most recent, newest first</span></h2>
+<div class="pagehead">
+  <h1>Audit log</h1>
+  <p class="lede">Every rule the agent evaluated — including the ones that did not apply —
+    plus each model call, result and human confirmation. Append-only; entries are never
+    rewritten. Newest first.</p>
+</div>
 
-<p class="modeline">
-  Every rule the agent evaluated, whether or not it applied, plus each model
-  call, result and human confirmation.
+<div class="resulthead">
+  <div class="stats">
+    <div class="stat"><b>{{ entries | length }}</b><span>Entries shown</span></div>
+    <div class="stat"><b>{{ entries | selectattr("kind", "equalto", "rule_evaluated") | list | length }}</b><span>Rules evaluated</span></div>
+    <div class="stat ok"><b>{{ entries | selectattr("kind", "equalto", "confirmation") | list | length }}</b><span>Confirmations</span></div>
+  </div>
   {% if skipped %}
-  <br><strong>{{ skipped }} line{{ "s" if skipped != 1 }} could not be parsed and were skipped.</strong>
+  <span class="pill degraded">{{ skipped }} unparseable line{{ "s" if skipped != 1 }}</span>
   {% endif %}
-</p>
+</div>
 
 {% if entries %}
-<div class="scroll">
-<table>
-  <thead>
-    <tr><th>Timestamp (UTC)</th><th>Kind</th><th>Result</th><th>Detail</th></tr>
-  </thead>
-  <tbody>
-    {% for e in entries %}
-    <tr{% if e.kind == "confirmation" %} class="confirmation"{% endif %}>
-      <td>{{ e.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}</td>
-      <td>{{ e.kind }}</td>
-      <td class="citation" style="display:inline;">{{ e.result_id[:12] }}</td>
-      <td class="payload">
-        {%- if e.kind == "rule_evaluated" -%}
-          {{ e.payload.rule_id }} &rarr; {{ "APPLIES" if e.payload.applies else "no" }}
-          ({{ e.payload.tier }})
-        {%- elif e.kind == "confirmation" -%}
-          confirmed by {{ e.payload.confirmed_by }} &middot; identity verified: {{ e.payload.identity_verified }}
-        {%- elif e.kind == "model_call" -%}
-          mode {{ e.payload.mode }} &middot; in {{ e.payload.input_tokens }} /
-          out {{ e.payload.output_tokens }} tokens &middot; {{ e.payload.latency_ms }} ms
-        {%- elif e.kind == "result" -%}
-          mode {{ e.payload.mode }} &middot; required {{ e.payload.required | length }},
-          review {{ e.payload.broker_review | length }},
-          {{ e.payload.rules_evaluated }} rules evaluated
-        {%- else -%}
-          {{ e.payload }}
-        {%- endif -%}
-      </td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="card tablewrap">
+  <table>
+    <thead>
+      <tr><th>Timestamp (UTC)</th><th>Event</th><th>Result</th><th>Detail</th></tr>
+    </thead>
+    <tbody>
+      {% for e in entries %}
+      <tr>
+        <td class="when">{{ e.timestamp.strftime("%H:%M:%S") }}</td>
+        <td><span class="kind {{ e.kind }}">{{ e.kind.replace("_", " ") }}</span></td>
+        <td class="rid">{{ e.result_id[:8] }}</td>
+        <td class="detail">
+          {%- if e.kind == "rule_evaluated" -%}
+            {{ e.payload.rule_id }} —
+            {% if e.payload.applies %}<span class="applies">applies</span>{% else %}<span class="no">does not apply</span>{% endif %}
+          {%- elif e.kind == "confirmation" -%}
+            confirmed by {{ e.payload.confirmed_by }} · identity verified: {{ e.payload.identity_verified }}
+          {%- elif e.kind == "model_call" -%}
+            {{ e.payload.mode }} · {{ e.payload.input_tokens }} in / {{ e.payload.output_tokens }} out · {{ e.payload.latency_ms }} ms
+          {%- elif e.kind == "result" -%}
+            {{ e.payload.mode }} · {{ e.payload.required | length }} required, {{ e.payload.broker_review | length }} review · {{ e.payload.rules_evaluated }} rules evaluated
+          {%- else -%}
+            {{ e.payload.get("detail") or e.payload.get("resolution") or e.payload.get("stage") or e.payload }}
+          {%- endif -%}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 {% else %}
-<p class="empty">No entries yet. Generate a checklist and this log will fill.</p>
+<div class="empty">No entries yet. Generate a checklist and this log will fill.</div>
 {% endif %}
 
 {% endblock %}
