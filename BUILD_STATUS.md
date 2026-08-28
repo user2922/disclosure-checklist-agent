@@ -1,6 +1,6 @@
 # BUILD_STATUS
 
-**Current phase: Prompt 7 — ADK agent, model wiring, and cost control.**
+**Current phase: Prompt 8 — FastAPI routes.**
 
 Target: **localhost**. Deployment deferred 2026-08-28.
 Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
@@ -13,8 +13,8 @@ Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
 | 4 | Rule data files and loader | ✅ done — Checkpoint 4 passed 7/7 |
 | 5 | Deterministic engine and the rule tests | ✅ done — Checkpoint 5 passed 7/7 |
 | 6 | Append-only audit log | ✅ done — Checkpoint 6 passed 8/8 |
-| 7 | ADK agent, model wiring, and cost control | ⬜ next |
-| 8 | FastAPI routes | ⬜ |
+| 7 | ADK agent, model wiring, and cost control | ✅ done — Checkpoint 7 passed 10/10 (live provider path UNVERIFIED) |
+| 8 | FastAPI routes | ⬜ next |
 | 9 | Templates, the disclaimer, and the confirm button | ⬜ |
 | 10 | Demo fixtures, smoke script, and end-to-end verification | ⬜ |
 | 11 | Cloud Run deploy and README | ⏸ deferred — run **item 5 only** (README) during Prompt 10 |
@@ -26,7 +26,7 @@ Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
 | 2 | Environment and secrets, incl. scanner canary | ✅ canary-verified both directions |
 | 2 | Connection pooling | ⏭ skipped — no database |
 | 5 | Determinism | ✅ 3 canaries; suite proven able to fail |
-| 7 | Metered API controls | ⬜ |
+| 7 | Metered API controls | ✅ 3 canaries; key-leak check clean |
 | 7 | Payment integration | ⏭ skipped — no payments |
 | 8 | Data access | ⬜ |
 
