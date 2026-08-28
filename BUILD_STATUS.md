@@ -1,6 +1,6 @@
 # BUILD_STATUS
 
-**Current phase: Prompt 6 — Append-only audit log.**
+**Current phase: Prompt 7 — ADK agent, model wiring, and cost control.**
 
 Target: **localhost**. Deployment deferred 2026-08-28.
 Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
@@ -12,8 +12,8 @@ Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
 | 3 | Pydantic schemas, the shared spine | ✅ done — Checkpoint 3 passed 9/9 |
 | 4 | Rule data files and loader | ✅ done — Checkpoint 4 passed 7/7 |
 | 5 | Deterministic engine and the rule tests | ✅ done — Checkpoint 5 passed 7/7 |
-| 6 | Append-only audit log | ⬜ next |
-| 7 | ADK agent, model wiring, and cost control | ⬜ |
+| 6 | Append-only audit log | ✅ done — Checkpoint 6 passed 8/8 |
+| 7 | ADK agent, model wiring, and cost control | ⬜ next |
 | 8 | FastAPI routes | ⬜ |
 | 9 | Templates, the disclaimer, and the confirm button | ⬜ |
 | 10 | Demo fixtures, smoke script, and end-to-end verification | ⬜ |
@@ -54,3 +54,6 @@ Produced: `CLAUDE.md` (17 rules, disclaimer verified byte-identical to `SPEC.md`
 - Get a Gemini key if the live agent is to be demoed. Offline mode covers the
   build but shows a rules engine, not an ADK agent.
 - Ask whoever owns Entry 1's deploy script whether a GCP project already exists.
+- README must state that the audit log is on an ephemeral filesystem and does not
+  survive an instance restart. Captured in app/audit.py's docstring; goes in the
+  README during the Prompt 10 session.
