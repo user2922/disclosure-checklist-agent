@@ -1,6 +1,6 @@
 # BUILD_STATUS
 
-**Current phase: Prompt 10 — Demo fixtures, smoke script, end-to-end verification, README.**
+**BUILD COMPLETE.** Prompts 1–10 done. Prompt 11 (deploy) deferred by decision; its README work is done.
 
 Target: **localhost**. Deployment deferred 2026-08-28.
 Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
@@ -16,7 +16,7 @@ Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
 | 7 | ADK agent, model wiring, and cost control | ✅ done — Checkpoint 7 passed 10/10 (live provider path UNVERIFIED) |
 | 8 | FastAPI routes | ✅ done — Checkpoint 8 passed 8/8 |
 | 9 | Templates, the disclaimer, and the confirm button | ✅ done — Checkpoint 9 passed 9/9 |
-| 10 | Demo fixtures, smoke script, and end-to-end verification | ⬜ next (+ README, folded in from P11) |
+| 10 | Demo fixtures, smoke script, end-to-end verification, README | ✅ done — Checkpoint 10 passed 8/8 |
 | 11 | Cloud Run deploy and README | ⏸ deferred — run **item 5 only** (README) during Prompt 10 |
 
 ## Spot checks
@@ -51,7 +51,8 @@ Produced: `CLAUDE.md` (17 rules, disclaimer verified byte-identical to `SPEC.md`
 
 - Verify every citation against current statute. `dc_underground_tank` and
   `md_lead_registration` are the least certain. Not a code task.
-- Get a Gemini key if the live agent is to be demoed. Offline mode covers the
+- Get a Gemini key if the live agent is to be demoed (THE largest remaining risk:
+  no successful live call has ever been made). Offline mode covers the
   build but shows a rules engine, not an ADK agent.
 - Ask whoever owns Entry 1's deploy script whether a GCP project already exists.
 - README must state that the audit log is on an ephemeral filesystem and does not
