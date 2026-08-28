@@ -61,7 +61,13 @@ class Financing(StrEnum):
 
 
 Tier = Literal["required", "likely", "review"]
-Mode = Literal["live", "cached", "offline"]
+# live      the model wrote the wording
+# cached    identical facts seen before; no provider call
+# offline   no API key is configured; wording is each rule's own summary
+# degraded  a key IS configured but the call failed; wording fell back to
+#           summaries rather than failing the request. Distinct from offline so
+#           "we have no key" and "the model just broke" never look the same.
+Mode = Literal["live", "cached", "offline", "degraded"]
 AuditKind = Literal["rule_evaluated", "model_call", "result", "confirmation", "error"]
 
 

@@ -245,12 +245,42 @@ def run_checklist(facts: TransactionFacts, caller: str = "local") -> ChecklistRe
             {"mode": "cached", "input_tokens": 0, "output_tokens": 0, "latency_ms": 0},
         )
     else:
-        mode = "live"
+        # Rate limit and ceiling are deliberate refusals, not failures. They
+        # still raise, and still surface as 429.
         limits.check_rate_limit(caller, settings.RATE_LIMIT_PER_MINUTE)
         limits.check_daily_ceiling(settings.MAX_MODEL_CALLS_PER_DAY)
-        reasons = _call_model(facts, result_id)
-        _log_disagreement(result_id, applied, reasons)
-        cache.put(facts_hash, reasons)
+        try:
+            reasons = _call_model(facts, result_id)
+            mode = "live"
+            _log_disagreement(result_id, applied, reasons)
+            cache.put(facts_hash, reasons)
+        except (ModelUnavailable, ModelOutputError) as exc:
+            # The model writes wording, not answers. If it is unreachable the
+            # checklist is still correct, so serve it with the rules' own
+            # summaries rather than failing the request. Labelled `degraded`
+            # and recorded — never presented as though a model had run.
+            mode = "degraded"
+            reasons = _offline_reasons(facts, applied)
+            logger.warning("model unavailable, degrading to rule summaries: %s", exc)
+            audit.append(
+                "error",
+                result_id,
+                {
+                    "stage": "model_call",
+                    "resolution": "degraded_to_summaries",
+                    "error": type(exc).__name__,
+                },
+            )
+            audit.append(
+                "model_call",
+                result_id,
+                {
+                    "mode": "degraded",
+                    "input_tokens": 0,
+                    "output_tokens": 0,
+                    "latency_ms": 0,
+                },
+            )
 
     try:
         result = _assemble(facts, buckets, reasons, result_id, mode)

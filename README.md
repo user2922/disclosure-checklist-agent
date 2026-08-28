@@ -34,7 +34,7 @@ uvicorn app.main:app --reload --port 8080
 Then open <http://localhost:8080>.
 
 ```
-Test:   pytest -q                     86 tests, no API key needed
+Test:   pytest -q                     90 tests, no API key needed
 Lint:   ruff check . ; ruff format .
 Smoke:  bash scripts/smoke.sh         needs a running server; 0 pass, 1 fail, 2 unreachable
 Secrets: bash scripts/scan-secrets.sh
@@ -56,6 +56,24 @@ has no `win_arm64` wheel and fails to compile. `requirements.txt` pins plain
 | FEATURE | `GOOGLE_API_KEY` | **Unset is a supported mode**, see below |
 | OPTIONAL | `RATE_LIMIT_PER_MINUTE` | Default 10 |
 | OPTIONAL | `MAX_MODEL_CALLS_PER_DAY` | Default 200 |
+
+### Four modes, all recorded and all shown on the page
+
+| Mode | Meaning |
+|---|---|
+| `live` | the model wrote the wording |
+| `cached` | identical facts seen before; no provider call was made |
+| `offline` | no API key configured; wording is each rule's own summary |
+| `degraded` | a key **is** configured but the call failed; wording fell back to summaries rather than failing the request |
+
+`degraded` exists so a provider outage cannot take down a demo. The model writes
+wording, not answers — which rules apply is decided in code — so an unreachable
+model leaves the checklist correct. It is served, labelled on the page ("The
+model was unavailable..."), and recorded in the audit log with the exception
+type. It is never presented as though a model had run.
+
+Rate limits and the daily ceiling still refuse with 429. Only *failures* degrade;
+deliberate refusals stay refusals.
 
 ### Offline mode
 
@@ -195,7 +213,7 @@ app/
   schemas.py   every shape used by more than one module
   limits.py    fail-closed rate limit and daily ceiling
   cache.py     bounded response cache keyed on the facts hash
-tests/         86 tests, offline
+tests/         90 tests, offline
 scripts/       smoke.sh, scan-secrets.sh
 ```
 

@@ -203,7 +203,13 @@ def test_offline_mode_never_retries(isolated: Path, monkeypatch) -> None:
     assert calls == [], "offline mode must never call the model, even on failure"
 
 
-def test_model_unavailable_when_the_runner_cannot_start(isolated: Path, monkeypatch) -> None:
+def test_model_unavailable_names_the_model_id(isolated: Path, monkeypatch) -> None:
+    """_call_model still raises and names the id — that is the unit-level contract.
+
+    run_checklist now catches this and degrades (see the degraded-mode tests);
+    the error type and its message are what the audit log records, so they still
+    have to be right.
+    """
     monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
     monkeypatch.setenv("GEMINI_MODEL", "no-such-model-xyz")
     get_settings.cache_clear()
@@ -214,8 +220,29 @@ def test_model_unavailable_when_the_runner_cannot_start(isolated: Path, monkeypa
         runners, "InMemoryRunner", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("404"))
     )
     with pytest.raises(ModelUnavailable) as excinfo:
-        agent_mod.run_checklist(load_fixture("md_1970_sfh"))
+        agent_mod._call_model(load_fixture("md_1970_sfh"), "rid")
     assert "no-such-model-xyz" in str(excinfo.value)
+
+
+def test_a_broken_model_never_surfaces_as_an_error_to_the_caller(
+    isolated: Path, monkeypatch
+) -> None:
+    """End to end: the same failure that used to 503 now returns a checklist."""
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    monkeypatch.setenv("GEMINI_MODEL", "no-such-model-xyz")
+    get_settings.cache_clear()
+
+    import google.adk.runners as runners
+
+    monkeypatch.setattr(
+        runners, "InMemoryRunner", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("404"))
+    )
+    result = agent_mod.run_checklist(load_fixture("md_1970_sfh"))
+    assert result.mode == "degraded"
+    assert {i.rule_id for i in result.required} == {
+        "fed_lead_paint",
+        "md_residential_disclosure",
+    }
 
 
 # ---------------------------------------------------------------- parsing & authority
@@ -257,3 +284,67 @@ def test_engine_wins_when_the_model_disagrees(isolated: Path, monkeypatch) -> No
     assert len(disagreements) == 1
     assert disagreements[0].payload["resolution"] == "engine"
     assert "invented_rule" in disagreements[0].payload["model_only"]
+
+
+# ---------------------------------------------------------------- degraded mode
+
+
+def test_model_failure_degrades_instead_of_failing_the_request(isolated: Path, monkeypatch) -> None:
+    """A demo must not 503 because the provider blinked.
+
+    The model writes wording, not answers, so an unreachable model leaves the
+    checklist correct. Serve it, label it, record it.
+    """
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    get_settings.cache_clear()
+
+    def boom(facts, result_id):  # noqa: ANN001, ARG001
+        raise ModelUnavailable("provider down")
+
+    monkeypatch.setattr(agent_mod, "_call_model", boom)
+
+    result = agent_mod.run_checklist(load_fixture("dc_condo_tenant"))
+
+    assert result.mode == "degraded", "must be distinguishable from 'offline'"
+    assert result.rules_evaluated == 9
+    assert {i.rule_id for i in result.required} == {
+        "dc_sellers_disclosure",
+        "dc_topa",
+        "dc_condo_resale",
+    }
+
+    from app.rules.loader import rules_for
+
+    catalogue = rules_for("DC")
+    for item in result.required:
+        assert item.reason == catalogue[item.rule_id].summary.strip()
+
+
+def test_degradation_is_recorded_not_silent(isolated: Path, monkeypatch) -> None:
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    get_settings.cache_clear()
+    monkeypatch.setattr(
+        agent_mod,
+        "_call_model",
+        lambda f, r: (_ for _ in ()).throw(ModelOutputError("garbage")),
+    )
+
+    agent_mod.run_checklist(load_fixture("md_1970_sfh"))
+    entries = audit.read_entries(path=isolated).entries
+
+    errors = [e for e in entries if e.payload.get("resolution") == "degraded_to_summaries"]
+    assert len(errors) == 1
+    assert errors[0].payload["error"] == "ModelOutputError"
+    assert [e for e in entries if e.kind == "result"][0].payload["mode"] == "degraded"
+
+
+def test_rate_limit_still_refuses_and_does_not_degrade(isolated: Path, monkeypatch) -> None:
+    """Deliberate refusals must stay refusals. Only failures degrade."""
+    monkeypatch.setenv("GOOGLE_API_KEY", "test-key")
+    monkeypatch.setenv("RATE_LIMIT_PER_MINUTE", "1")
+    get_settings.cache_clear()
+    monkeypatch.setattr(agent_mod, "_call_model", lambda f, r: {})
+
+    agent_mod.run_checklist(load_fixture("md_1970_sfh"), caller="9.9.9.9")
+    with pytest.raises(RateLimitExceeded):
+        agent_mod.run_checklist(load_fixture("md_1985_sfh"), caller="9.9.9.9")

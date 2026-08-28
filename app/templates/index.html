@@ -80,10 +80,14 @@
 {% if result.likely %}{{ bucket("Likely", result.likely, false) }}{% endif %}
 {{ bucket("Broker Review", result.broker_review, true) }}
 
-<p class="modeline{% if result.mode == 'offline' %} offline{% endif %}">
+<p class="modeline{% if result.mode in ['offline', 'degraded'] %} offline{% endif %}">
   {% if result.mode == 'offline' %}
     No model was called. Wording below each item is the rule's own summary text.
     {{ result.rules_evaluated }} rules evaluated.
+  {% elif result.mode == 'degraded' %}
+    The model was unavailable, so wording fell back to each rule's own summary
+    text. Which rules apply is unaffected — that is decided in code, not by the
+    model. {{ result.rules_evaluated }} rules evaluated.
   {% elif result.mode == 'cached' %}
     Wording reused from an identical earlier request; no model call was made.
     {{ result.rules_evaluated }} rules evaluated.
