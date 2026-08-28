@@ -5,19 +5,90 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Disclosure Checklist Agent{% endblock %}</title>
   <style>
-    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-           max-width: 900px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
-    nav a { margin-right: 1rem; }
-    .citation { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: .9em; }
-    .disclaimer { border: 2px solid #333; padding: .75rem; margin: 1rem 0; }
-    .note { background: #f4f4f4; padding: .5rem; margin: .25rem 0; }
-    table { border-collapse: collapse; width: 100%; }
-    td, th { border: 1px solid #ccc; padding: .35rem .5rem; text-align: left; vertical-align: top; }
+    :root {
+      --ink: #14181d;
+      --muted: #5a6472;
+      --line: #d3d9e0;
+      --paper: #ffffff;
+      --wash: #f5f7f9;
+      --required: #0b5cad;
+      --review: #9a5b00;
+      --review-wash: #fdf5e6;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: var(--ink); background: var(--paper);
+      max-width: 940px; margin: 0 auto; padding: 1.5rem 1.25rem 4rem;
+      line-height: 1.55; font-size: 17px;
+    }
+    header { border-bottom: 2px solid var(--ink); padding-bottom: .75rem; margin-bottom: 1.5rem; }
+    header h1 { font-size: 1.5rem; margin: 0 0 .35rem; letter-spacing: -.01em; }
+    header h1 a { color: inherit; text-decoration: none; }
+    header p { margin: 0 0 .5rem; color: var(--muted); font-size: .95rem; }
+    nav a { margin-right: 1.25rem; font-weight: 600; color: var(--required); }
+    h2 { font-size: 1.15rem; margin: 2rem 0 .5rem; padding-bottom: .3rem;
+         border-bottom: 1px solid var(--line); }
+    .count { color: var(--muted); font-weight: 400; font-size: .9rem; }
+
+    form.intake { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+                  gap: .9rem; align-items: end; background: var(--wash);
+                  border: 1px solid var(--line); border-radius: 6px; padding: 1rem; }
+    form.intake label { display: block; font-size: .82rem; font-weight: 600;
+                        text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+    form.intake select, form.intake input[type=number] {
+      width: 100%; margin-top: .3rem; padding: .45rem .5rem; font-size: 1rem;
+      border: 1px solid var(--line); border-radius: 4px; background: var(--paper); color: var(--ink);
+    }
+    .checkbox { display: flex; align-items: center; gap: .5rem; padding-bottom: .55rem; }
+    .checkbox input { width: 1.1rem; height: 1.1rem; }
+    button { font: inherit; font-weight: 600; padding: .55rem 1.1rem; border-radius: 4px;
+             border: 1px solid var(--required); background: var(--required); color: #fff;
+             cursor: pointer; }
+    button[disabled] { background: var(--muted); border-color: var(--muted); cursor: default; }
+
+    ul.items { list-style: none; padding: 0; margin: 0; }
+    ul.items li { border-left: 4px solid var(--required); background: var(--wash);
+                  padding: .7rem .9rem; margin-bottom: .6rem; border-radius: 0 4px 4px 0; }
+    ul.items.review li { border-left-color: var(--review); background: var(--review-wash); }
+    .name { font-weight: 700; }
+    .citation { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+                font-size: .85rem; color: var(--muted); display: block; margin: .1rem 0 .35rem; }
+    .note { border-top: 1px dashed var(--review); margin-top: .5rem; padding-top: .45rem;
+            font-size: .93rem; color: var(--review); }
+    .note strong { text-transform: uppercase; font-size: .75rem; letter-spacing: .05em; }
+    .empty { color: var(--muted); font-style: italic; margin: .3rem 0 0; }
+
+    .disclaimer { border: 2px solid var(--ink); border-radius: 4px; padding: .85rem 1rem;
+                  margin: 2rem 0 1rem; font-weight: 600; }
+    .modeline { font-size: .9rem; color: var(--muted); margin: 1rem 0 0; }
+    .modeline.offline { color: var(--review); font-weight: 600; }
+
+    .confirm { border: 1px solid var(--line); border-radius: 6px; padding: 1rem;
+               background: var(--wash); display: flex; gap: .75rem;
+               align-items: flex-end; flex-wrap: wrap; }
+    .confirm label { font-size: .82rem; font-weight: 600; text-transform: uppercase;
+                     letter-spacing: .04em; color: var(--muted); }
+    .confirm input[type=text] { display: block; margin-top: .3rem; padding: .45rem .5rem;
+                                font-size: 1rem; border: 1px solid var(--line); border-radius: 4px; }
+    .confirmed { border-left: 4px solid #157a3d; background: #eff8f2; padding: .7rem .9rem;
+                 margin-top: .75rem; }
+
+    table { border-collapse: collapse; width: 100%; font-size: .88rem; }
+    th, td { border-bottom: 1px solid var(--line); padding: .4rem .55rem;
+             text-align: left; vertical-align: top; }
+    th { background: var(--wash); font-size: .78rem; text-transform: uppercase;
+         letter-spacing: .04em; color: var(--muted); }
+    tr.confirmation td { background: #eff8f2; font-weight: 600; }
+    td.payload { font-family: ui-monospace, Consolas, monospace; font-size: .8rem;
+                 word-break: break-word; }
+    .scroll { overflow-x: auto; }
   </style>
 </head>
 <body>
   <header>
     <h1><a href="/">Disclosure Checklist Agent</a></h1>
+    <p>The agent recommends. A licensed broker confirms.</p>
     <nav><a href="/">Checklist</a><a href="/audit">Audit log</a></nav>
   </header>
   <main>{% block content %}{% endblock %}</main>

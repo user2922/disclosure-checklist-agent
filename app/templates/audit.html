@@ -1,17 +1,53 @@
 {% extends "base.html" %}
-{% block title %}Audit log{% endblock %}
+{% block title %}Audit log — Disclosure Checklist Agent{% endblock %}
 {% block content %}
-<h2>Audit log</h2>
-{% if skipped %}<p>{{ skipped }} unparseable line(s) skipped.</p>{% endif %}
+
+<h2>Audit log <span class="count">{{ entries | length }} most recent, newest first</span></h2>
+
+<p class="modeline">
+  Every rule the agent evaluated, whether or not it applied, plus each model
+  call, result and human confirmation.
+  {% if skipped %}
+  <br><strong>{{ skipped }} line{{ "s" if skipped != 1 }} could not be parsed and were skipped.</strong>
+  {% endif %}
+</p>
+
 {% if entries %}
+<div class="scroll">
 <table>
-  <tr><th>Timestamp</th><th>Kind</th><th>Result</th><th>Payload</th></tr>
-  {% for e in entries %}
-  <tr><td>{{ e.timestamp }}</td><td>{{ e.kind }}</td><td class="citation">{{ e.result_id }}</td>
-      <td>{{ e.payload }}</td></tr>
-  {% endfor %}
+  <thead>
+    <tr><th>Timestamp (UTC)</th><th>Kind</th><th>Result</th><th>Detail</th></tr>
+  </thead>
+  <tbody>
+    {% for e in entries %}
+    <tr{% if e.kind == "confirmation" %} class="confirmation"{% endif %}>
+      <td>{{ e.timestamp.strftime("%Y-%m-%d %H:%M:%S") }}</td>
+      <td>{{ e.kind }}</td>
+      <td class="citation" style="display:inline;">{{ e.result_id[:12] }}</td>
+      <td class="payload">
+        {%- if e.kind == "rule_evaluated" -%}
+          {{ e.payload.rule_id }} &rarr; {{ "APPLIES" if e.payload.applies else "no" }}
+          ({{ e.payload.tier }})
+        {%- elif e.kind == "confirmation" -%}
+          confirmed by {{ e.payload.confirmed_by }} &middot; identity verified: {{ e.payload.identity_verified }}
+        {%- elif e.kind == "model_call" -%}
+          mode {{ e.payload.mode }} &middot; in {{ e.payload.input_tokens }} /
+          out {{ e.payload.output_tokens }} tokens &middot; {{ e.payload.latency_ms }} ms
+        {%- elif e.kind == "result" -%}
+          mode {{ e.payload.mode }} &middot; required {{ e.payload.required | length }},
+          review {{ e.payload.broker_review | length }},
+          {{ e.payload.rules_evaluated }} rules evaluated
+        {%- else -%}
+          {{ e.payload }}
+        {%- endif -%}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
+</div>
 {% else %}
-<p>No entries yet.</p>
+<p class="empty">No entries yet. Generate a checklist and this log will fill.</p>
 {% endif %}
+
 {% endblock %}
