@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Audit log{% endblock %}
+{% block content %}
+<h2>Audit log</h2>
+{% if skipped %}<p>{{ skipped }} unparseable line(s) skipped.</p>{% endif %}
+{% if entries %}
+<table>
+  <tr><th>Timestamp</th><th>Kind</th><th>Result</th><th>Payload</th></tr>
+  {% for e in entries %}
+  <tr><td>{{ e.timestamp }}</td><td>{{ e.kind }}</td><td class="citation">{{ e.result_id }}</td>
+      <td>{{ e.payload }}</td></tr>
+  {% endfor %}
+</table>
+{% else %}
+<p>No entries yet.</p>
+{% endif %}
+{% endblock %}

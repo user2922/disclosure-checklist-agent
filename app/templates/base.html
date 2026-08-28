@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Disclosure Checklist Agent{% endblock %}</title>
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+           max-width: 900px; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; }
+    nav a { margin-right: 1rem; }
+    .citation { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: .9em; }
+    .disclaimer { border: 2px solid #333; padding: .75rem; margin: 1rem 0; }
+    .note { background: #f4f4f4; padding: .5rem; margin: .25rem 0; }
+    table { border-collapse: collapse; width: 100%; }
+    td, th { border: 1px solid #ccc; padding: .35rem .5rem; text-align: left; vertical-align: top; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><a href="/">Disclosure Checklist Agent</a></h1>
+    <nav><a href="/">Checklist</a><a href="/audit">Audit log</a></nav>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+</body>
+</html>

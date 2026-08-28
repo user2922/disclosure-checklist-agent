@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<form method="post" action="/api/checklist">
+  <label>Jurisdiction
+    <select name="jurisdiction">
+      {% for v in ["DC","MD","VA"] %}
+      <option value="{{ v }}" {% if defaults.jurisdiction == v %}selected{% endif %}>{{ v }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Property type
+    <select name="property_type">
+      {% for v in ["single_family","condo","townhome_hoa","multi_family"] %}
+      <option value="{{ v }}" {% if defaults.property_type == v %}selected{% endif %}>{{ v }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Year built
+    <input type="number" name="year_built" min="1800" max="2026" value="{{ defaults.year_built }}">
+  </label>
+  <label>Association
+    <input type="checkbox" name="has_association" {% if defaults.has_association %}checked{% endif %}>
+  </label>
+  <label>Seller occupancy
+    <select name="seller_occupancy">
+      {% for v in ["owner_occupied","tenant_occupied","vacant"] %}
+      <option value="{{ v }}" {% if defaults.seller_occupancy == v %}selected{% endif %}>{{ v }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Financing
+    <select name="financing">
+      {% for v in ["conventional","fha","va","cash"] %}
+      <option value="{{ v }}" {% if defaults.financing == v %}selected{% endif %}>{{ v }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit">Generate checklist</button>
+</form>
+
+{% if result %}
+<p>Mode: <strong>{{ result.mode }}</strong> &middot; rules evaluated: {{ result.rules_evaluated }}</p>
+{% for label, items in [("Required", result.required), ("Likely", result.likely), ("Broker Review", result.broker_review)] %}
+  {% if label != "Likely" or items %}
+  <h2>{{ label }}</h2>
+  {% if items %}
+    <ul>
+    {% for item in items %}
+      <li><strong>{{ item.name }}</strong> <span class="citation">{{ item.citation }}</span><br>
+        {{ item.reason }}
+        {% if item.review_note %}<div class="note">{{ item.review_note }}</div>{% endif %}
+      </li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p>No items in this category for these facts.</p>
+  {% endif %}
+  {% endif %}
+{% endfor %}
+
+<p class="disclaimer">{{ result.disclaimer }}</p>
+
+<form method="post" action="/api/confirm">
+  <input type="hidden" name="result_id" value="{{ result.result_id }}">
+  <label>Confirmed by <input type="text" name="confirmed_by" required></label>
+  <button type="submit">Confirm checklist</button>
+</form>
+{% endif %}
+{% endblock %}

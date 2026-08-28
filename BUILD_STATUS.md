@@ -1,6 +1,6 @@
 # BUILD_STATUS
 
-**Current phase: Prompt 8 — FastAPI routes.**
+**Current phase: Prompt 9 — Templates, the disclaimer, and the confirm button.**
 
 Target: **localhost**. Deployment deferred 2026-08-28.
 Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
@@ -14,8 +14,8 @@ Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
 | 5 | Deterministic engine and the rule tests | ✅ done — Checkpoint 5 passed 7/7 |
 | 6 | Append-only audit log | ✅ done — Checkpoint 6 passed 8/8 |
 | 7 | ADK agent, model wiring, and cost control | ✅ done — Checkpoint 7 passed 10/10 (live provider path UNVERIFIED) |
-| 8 | FastAPI routes | ⬜ next |
-| 9 | Templates, the disclaimer, and the confirm button | ⬜ |
+| 8 | FastAPI routes | ✅ done — Checkpoint 8 passed 8/8 |
+| 9 | Templates, the disclaimer, and the confirm button | ⬜ next (minimal templates exist from P8; P9 owns the real UI) |
 | 10 | Demo fixtures, smoke script, and end-to-end verification | ⬜ |
 | 11 | Cloud Run deploy and README | ⏸ deferred — run **item 5 only** (README) during Prompt 10 |
 
@@ -28,7 +28,7 @@ Mode: `GOOGLE_API_KEY` unset → offline mode. Nothing before Prompt 7 needs it.
 | 5 | Determinism | ✅ 3 canaries; suite proven able to fail |
 | 7 | Metered API controls | ✅ 3 canaries; key-leak check clean |
 | 7 | Payment integration | ⏭ skipped — no payments |
-| 8 | Data access | ⬜ |
+| 8 | Data access | ✅ verified by request |
 
 ## Prompt 1 record
 
